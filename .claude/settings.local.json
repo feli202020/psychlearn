@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(supabase functions serve:*)",
+      "Bash(dir:*)",
+      "Bash(supabase secrets:*)",
+      "Bash(powershell -Command \"scoop bucket add supabase https://github.com/supabase/scoop-bucket.git; scoop install supabase\")",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}
