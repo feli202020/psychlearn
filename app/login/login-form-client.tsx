@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth-context';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Brain } from 'lucide-react';
 
-export default function LoginFormClient() {
+function LoginForm() {
   const [emailOrUsername, setEmailOrUsername] = useState('');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
@@ -118,5 +118,27 @@ export default function LoginFormClient() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function LoginFormClient() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 px-4">
+        <Card className="w-full max-w-md border-2 border-border shadow-xl">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <Brain className="w-12 h-12 text-primary" />
+            </div>
+            <CardTitle className="text-3xl font-bold text-foreground font-serif">
+              PsychoLearn
+            </CardTitle>
+            <p className="text-gray-600 mt-2">Wird geladen...</p>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   );
 }
