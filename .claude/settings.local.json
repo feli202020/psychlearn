@@ -5,7 +5,15 @@
       "Bash(dir:*)",
       "Bash(supabase secrets:*)",
       "Bash(powershell -Command \"scoop bucket add supabase https://github.com/supabase/scoop-bucket.git; scoop install supabase\")",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(Get-Content nul)",
+      "Bash(npm run dev:*)",
+      "Bash(npx supabase db remote status:*)",
+      "Bash(node check_daily_quiz_tables.js:*)",
+      "Bash(node apply_insert_policy.js:*)",
+      "Bash(node debug_quiz_session.js:*)",
+      "Bash(curl:*)",
+      "Bash(python:*)"
     ]
   }
 }

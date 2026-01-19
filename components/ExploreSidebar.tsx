@@ -84,13 +84,13 @@ export default function ExploreSidebar({ selectedModul, onSelectModul }: Explore
       >
         <div className="p-4">
           <h2 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <GraduationCap className="w-5 h-5 text-purple-600" />
+            <GraduationCap className="w-5 h-5 text-primary" />
             Semester & Module
           </h2>
 
           {loading ? (
             <div className="flex items-center justify-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           ) : semesters.length === 0 ? (
             <div className="text-gray-500 text-sm py-4 space-y-2">
@@ -126,10 +126,10 @@ export default function ExploreSidebar({ selectedModul, onSelectModul }: Explore
                           className={`
                             w-full text-left px-4 py-3 text-sm border-t border-gray-200
                             hover:bg-purple-50 transition-colors flex items-center gap-2
-                            ${selectedModul?.id === modul.id ? 'bg-purple-100 text-purple-700 font-medium' : 'text-gray-600'}
+                            ${selectedModul?.id === modul.id ? 'bg-purple-100 text-primary font-medium' : 'text-gray-600'}
                           `}
                         >
-                          <BookOpen className="w-4 h-4 flex-shrink-0" />
+                          <BookOpen className={`w-4 h-4 shrink-0 ${selectedModul?.id === modul.id ? 'text-primary' : ''}`} />
                           <span className="line-clamp-2">{modul.name}</span>
                         </button>
                       ))}

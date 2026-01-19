@@ -139,7 +139,10 @@ export async function getLernzielFortschritt(userId: string, lernzielId: string)
     .maybeSingle();
 
   if (error) {
-    console.error('Fehler beim Laden des Fortschritts:', error);
+    // Nur echte Fehler loggen, nicht wenn kein Eintrag existiert
+    if (error.code !== 'PGRST116') {
+      console.error('Fehler beim Laden des Fortschritts:', error);
+    }
     return null;
   }
 

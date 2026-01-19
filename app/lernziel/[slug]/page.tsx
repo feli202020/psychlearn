@@ -232,9 +232,9 @@ export default function LernzielDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-gray-600">Lade Lernziel...</p>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function LernzielDetailPage() {
 
   if (!lernziel) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Lernziel nicht gefunden</h1>
           <p className="text-gray-600 mb-4">Der Slug "{slug}" konnte nicht gefunden werden.</p>
@@ -260,9 +260,9 @@ export default function LernzielDetailPage() {
     Math.round((correctAnswers.size / selectedQuestions.length) * 100) : 0;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 py-12">
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-12">
       <div className="container mx-auto px-4 max-w-4xl">
-        
+
         <Link href="/explore">
           <Button variant="ghost" className="mb-6">
             <ArrowLeft className="w-4 h-4 mr-2" />
@@ -271,8 +271,8 @@ export default function LernzielDetailPage() {
         </Link>
 
         {/* Header */}
-        <Card className="mb-8 border-2 border-purple-200">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-blue-50">
+        <Card className="mb-8 border-2 border-border">
+          <CardHeader className="bg-muted">
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <CardTitle className="text-3xl mb-2">{lernziel.titel}</CardTitle>
@@ -292,11 +292,11 @@ export default function LernzielDetailPage() {
                 <span>{'⭐'.repeat(lernziel.schwierigkeitsgrad)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-blue-500" />
+                <Clock className="w-4 h-4 text-primary" />
                 <span>{lernziel.geschaetzte_dauer} Minuten</span>
               </div>
               <div className="flex items-center gap-2">
-                <BookOpen className="w-4 h-4 text-purple-500" />
+                <BookOpen className="w-4 h-4 text-primary" />
                 <span>{lernziel.fach?.name}</span>
               </div>
               <div className="flex items-center gap-2">
@@ -310,10 +310,10 @@ export default function LernzielDetailPage() {
 
         {/* Voraussetzungen */}
         {voraussetzungen.length > 0 && (
-          <Card className="mb-8 border-2 border-blue-200">
+          <Card className="mb-8 border-2 border-border">
             <CardHeader>
               <CardTitle className="text-xl flex items-center gap-2">
-                <BookOpen className="w-5 h-5" />
+                <BookOpen className="w-5 h-5 text-primary" />
                 Voraussetzungen
               </CardTitle>
             </CardHeader>
@@ -321,7 +321,7 @@ export default function LernzielDetailPage() {
               <ul className="space-y-2">
                 {voraussetzungen.map(vr => (
                   <li key={vr.id}>
-                    <Link href={`/lernziel/${vr.slug}`} className="text-purple-600 hover:underline">
+                    <Link href={`/lernziel/${vr.slug}`} className="text-primary hover:underline">
                       {vr.titel}
                     </Link>
                   </li>
@@ -334,7 +334,7 @@ export default function LernzielDetailPage() {
         {/* Quiz */}
         {selectedQuestions.length > 0 ? (
           !quizCompleted ? (
-            <Card className="mb-8 border-2 border-purple-200">
+            <Card className="mb-8 border-2 border-border">
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>
@@ -378,10 +378,10 @@ export default function LernzielDetailPage() {
                     Zurück
                   </Button>
                   
-                  <Button 
+                  <Button
                     onClick={handleNext}
                     disabled={!isCurrentAnswered}
-                    className="bg-gradient-to-r from-purple-600 to-blue-600"
+                    className="bg-primary"
                   >
                     {currentQuestionIndex === selectedQuestions.length - 1 ? 'Abschließen' : 'Weiter'}
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -409,11 +409,11 @@ export default function LernzielDetailPage() {
                   </Button>
                   
                   {user && !isCompleted && scorePercentage >= 70 && (
-                    <Button 
+                    <Button
                       onClick={handleComplete}
                       disabled={completing}
                       size="lg"
-                      className="bg-gradient-to-r from-green-600 to-green-700"
+                      className="bg-accent"
                     >
                       {completing ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Speichern...</>
@@ -427,7 +427,7 @@ export default function LernzielDetailPage() {
             </Card>
           )
         ) : (
-          <Card className="mb-8 border-2 border-purple-200">
+          <Card className="mb-8 border-2 border-border">
             <CardContent className="p-8 text-center">
               <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-600 mb-6">Für dieses Lernziel sind noch keine Fragen verfügbar.</p>

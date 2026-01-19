@@ -206,13 +206,13 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <Settings className="w-8 h-8 text-purple-600" />
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <Settings className="w-8 h-8 text-primary" />
+            <h1 className="text-3xl font-bold bg-primary bg-clip-text text-transparent">
               Kontoeinstellungen
             </h1>
           </div>
@@ -237,7 +237,7 @@ export default function SettingsPage() {
         <Card className="mb-6 border-2 border-purple-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <GraduationCap className="w-5 h-5 text-purple-600" />
+              <GraduationCap className="w-5 h-5 text-primary" />
               Semester-Einstellungen
             </CardTitle>
             <CardDescription>
@@ -275,7 +275,7 @@ export default function SettingsPage() {
                     className={`
                       p-3 rounded-lg font-semibold transition-all
                       ${selectedSemester === sem
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg'
+                        ? 'bg-primary text-white shadow-lg'
                         : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-purple-300'
                       }
                       ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
@@ -300,7 +300,7 @@ export default function SettingsPage() {
         <Card className="mb-6 border-2 border-purple-100">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Key className="w-5 h-5 text-purple-600" />
+              <Key className="w-5 h-5 text-primary" />
               Sicherheit & E-Mail
             </CardTitle>
             <CardDescription>

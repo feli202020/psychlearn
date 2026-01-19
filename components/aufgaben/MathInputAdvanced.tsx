@@ -182,14 +182,14 @@ export default function MathInputAdvanced({
         )}
 
         {/* Symbol-Tabs */}
-        <div className="border-2 border-gray-200 rounded-lg overflow-hidden">
+        <div className="border-2 border-border rounded-lg overflow-hidden">
           {/* Tab Header */}
-          <div className="flex border-b-2 border-gray-200 bg-gray-50">
+          <div className="flex border-b-2 border-border bg-muted">
             <button
               onClick={() => setActiveTab('häufig')}
               className={`flex-1 px-4 py-2 font-medium transition-colors ${
                 activeTab === 'häufig'
-                  ? 'bg-white border-b-2 border-blue-500 text-blue-600'
+                  ? 'bg-white border-b-2 border-primary text-primary'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -199,7 +199,7 @@ export default function MathInputAdvanced({
               onClick={() => setActiveTab('erweitert')}
               className={`flex-1 px-4 py-2 font-medium transition-colors ${
                 activeTab === 'erweitert'
-                  ? 'bg-white border-b-2 border-blue-500 text-blue-600'
+                  ? 'bg-white border-b-2 border-primary text-primary'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -215,7 +215,7 @@ export default function MathInputAdvanced({
                   key={symbol}
                   onClick={() => insertSymbol(symbol)}
                   disabled={submitted && isCorrect}
-                  className="px-2 py-2 border border-gray-300 rounded hover:bg-blue-50 hover:border-blue-400 transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-2 py-2 border border-border rounded hover:bg-primary/10 hover:border-primary transition-colors text-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   title={label}
                 >
                   {symbol}
@@ -243,11 +243,11 @@ export default function MathInputAdvanced({
           />
           
           {!submitted ? (
-            <Button 
-              onClick={checkAnswer} 
-              disabled={!answer.trim()} 
-              size="lg" 
-              className="px-8 bg-gradient-to-r from-purple-600 to-blue-600"
+            <Button
+              onClick={checkAnswer}
+              disabled={!answer.trim()}
+              size="lg"
+              className="px-8 bg-primary"
             >
               Prüfen
             </Button>
@@ -260,17 +260,17 @@ export default function MathInputAdvanced({
 
         {/* Ergebnis */}
         {submitted && (
-          <div className={`p-4 rounded-lg ${isCorrect ? 'bg-green-50 border-2 border-green-200' : 'bg-red-50 border-2 border-red-200'}`}>
+          <div className={`p-4 rounded-lg ${isCorrect ? 'bg-accent/10 border-2 border-accent' : 'bg-destructive/10 border-2 border-destructive'}`}>
             <div className="flex items-center gap-2 mb-2">
               {isCorrect ? (
                 <>
-                  <CheckCircle className="text-green-600" size={24} />
-                  <span className="font-bold text-green-800">Richtig!</span>
+                  <CheckCircle className="text-accent" size={24} />
+                  <span className="font-bold text-accent">Richtig!</span>
                 </>
               ) : (
                 <>
-                  <XCircle className="text-red-600" size={24} />
-                  <span className="font-bold text-red-800">Leider nicht richtig.</span>
+                  <XCircle className="text-destructive" size={24} />
+                  <span className="font-bold text-destructive">Leider nicht richtig.</span>
                 </>
               )}
             </div>

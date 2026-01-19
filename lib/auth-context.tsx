@@ -17,7 +17,7 @@ interface AuthContextType {
   profile: UserProfile | null;
   loading: boolean;
   signUp: (email: string, password: string, username: string, semester?: number) => Promise<any>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string, rememberMe?: boolean) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -95,7 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return data;
   }
 
-  async function signIn(emailOrUsername: string, password: string) {
+  async function signIn(emailOrUsername: string, password: string, rememberMe: boolean = false) {
     let email = emailOrUsername;
 
     // Prüfen, ob es ein Username ist (kein @-Zeichen)
@@ -115,17 +115,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Login mit E-Mail
+    // Wenn rememberMe aktiviert ist, setze Session auf 30 Tage, sonst Browser-Session
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: {
+        persistSession: true,
+      }
     });
 
     if (error) throw error;
+
+    // Setze die Session-Persistenz basierend auf rememberMe
+    if (rememberMe) {
+      // Session für 30 Tage speichern
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        await supabase.auth.setSession({
+          access_token: session.access_token,
+          refresh_token: session.refresh_token,
+        });
+      }
+      // Speichere Präferenz für 30 Tage
+      localStorage.setItem('rememberMe', 'true');
+    } else {
+      // Nur für aktuelle Browser-Session
+      localStorage.setItem('rememberMe', 'false');
+    }
   }
 
   async function signOut() {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    // Lösche rememberMe Präferenz
+    localStorage.removeItem('rememberMe');
   }
 
   return (

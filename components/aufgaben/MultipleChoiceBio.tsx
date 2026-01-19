@@ -33,11 +33,17 @@ export default function MultipleChoiceBio({ question, onComplete, questionNumber
 
   const handleToggle = (index: number) => {
     if (submitted) return;
-    
-    if (selectedIndices.includes(index)) {
-      setSelectedIndices(selectedIndices.filter(i => i !== index));
+
+    // Bei nur einer richtigen Antwort: Radio-Button-Verhalten (nur eine Auswahl)
+    if (question.correct_indices.length === 1) {
+      setSelectedIndices([index]);
     } else {
-      setSelectedIndices([...selectedIndices, index]);
+      // Bei mehreren richtigen Antworten: Checkbox-Verhalten (mehrere Auswahlen)
+      if (selectedIndices.includes(index)) {
+        setSelectedIndices(selectedIndices.filter(i => i !== index));
+      } else {
+        setSelectedIndices([...selectedIndices, index]);
+      }
     }
   };
 
@@ -130,19 +136,19 @@ export default function MultipleChoiceBio({ question, onComplete, questionNumber
                 className={`w-full text-left p-4 rounded-lg border-2 transition-all ${
                   submitted
                     ? isCorrectAnswer
-                      ? 'border-green-500 bg-green-50'
+                      ? 'border-accent bg-accent/10'
                       : isSelected
-                      ? 'border-red-500 bg-red-50'
-                      : 'border-gray-200 bg-gray-50'
+                      ? 'border-destructive bg-destructive/10'
+                      : 'border-border bg-muted'
                     : isSelected
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-300 hover:border-blue-300 hover:bg-gray-50'
+                    ? 'border-primary bg-primary/10'
+                    : 'border-border hover:border-primary hover:bg-muted'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   {/* Checkbox */}
                   <div className={`w-5 h-5 border-2 rounded flex items-center justify-center ${
-                    isSelected ? 'bg-blue-500 border-blue-500' : 'border-gray-400'
+                    isSelected ? 'bg-primary border-primary' : 'border-gray-400'
                   }`}>
                     {isSelected && <div className="w-2 h-2 bg-white rounded-sm" />}
                   </div>
@@ -153,9 +159,9 @@ export default function MultipleChoiceBio({ question, onComplete, questionNumber
                   {/* Checkmark/X nach Submit */}
                   {submitted && (
                     isCorrectAnswer ? (
-                      <CheckCircle className="text-green-600" size={20} />
+                      <CheckCircle className="text-accent" size={20} />
                     ) : isSelected ? (
-                      <XCircle className="text-red-600" size={20} />
+                      <XCircle className="text-destructive" size={20} />
                     ) : null
                   )}
                 </div>
@@ -165,25 +171,25 @@ export default function MultipleChoiceBio({ question, onComplete, questionNumber
         </div>
 
         {!submitted ? (
-          <Button 
-            onClick={handleSubmit} 
-            disabled={selectedIndices.length === 0} 
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600" 
+          <Button
+            onClick={handleSubmit}
+            disabled={selectedIndices.length === 0}
+            className="w-full bg-primary"
             size="lg"
           >
             Antwort überprüfen
           </Button>
         ) : (
           <div className={`p-4 rounded-lg ${
-            answerStatus?.status === 'correct' ? 'bg-green-50 border-2 border-green-200' : 
-            answerStatus?.status === 'partial' ? 'bg-yellow-50 border-2 border-yellow-200' : 
-            'bg-red-50 border-2 border-red-200'
+            answerStatus?.status === 'correct' ? 'bg-accent/10 border-2 border-accent' :
+            answerStatus?.status === 'partial' ? 'bg-yellow-50 border-2 border-yellow-500' :
+            'bg-destructive/10 border-2 border-destructive'
           }`}>
             <div className="flex items-center gap-2 mb-2">
               {answerStatus?.status === 'correct' ? (
                 <>
-                  <CheckCircle className="text-green-600" size={24} />
-                  <span className="font-bold text-green-800">Richtig!</span>
+                  <CheckCircle className="text-accent" size={24} />
+                  <span className="font-bold text-accent">Richtig!</span>
                 </>
               ) : answerStatus?.status === 'partial' ? (
                 <>
@@ -194,8 +200,8 @@ export default function MultipleChoiceBio({ question, onComplete, questionNumber
                 </>
               ) : (
                 <>
-                  <XCircle className="text-red-600" size={24} />
-                  <span className="font-bold text-red-800">Leider falsch.</span>
+                  <XCircle className="text-destructive" size={24} />
+                  <span className="font-bold text-destructive">Leider falsch.</span>
                 </>
               )}
             </div>

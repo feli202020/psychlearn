@@ -1,10 +1,20 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Work_Sans, Crimson_Pro } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth-context";
 import Navigation from "@/components/Navigation";
 
-const inter = Inter({ subsets: ["latin"] });
+const workSans = Work_Sans({
+  subsets: ["latin"],
+  variable: "--font-work-sans",
+  display: "swap",
+});
+
+const crimsonPro = Crimson_Pro({
+  subsets: ["latin"],
+  variable: "--font-crimson-pro",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "PsychLearn - Deine Lernplattform fÃ¼rs Psychologie-Studium",
@@ -18,7 +28,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="de">
-      <body className={inter.className}>
+      <body className={`${workSans.variable} ${crimsonPro.variable} font-sans`}>
         <AuthProvider>
           <Navigation />
           {children}

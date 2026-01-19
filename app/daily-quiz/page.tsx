@@ -22,9 +22,9 @@ import {
   Lightbulb,
   BookOpen
 } from 'lucide-react';
-import { getModuleGroupedBySemester, getQuestionsByModule } from '@/lib/database';
 import { Question } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
+import { getCurrentQuizDate, formatQuizDate } from '@/lib/daily-quiz-utils';
 
 // Symbol-Kategorien für Mathe-Fragen
 const MATH_SYMBOLS = {
@@ -87,7 +87,7 @@ const MATH_SYMBOLS = {
 export const dynamic = 'force-dynamic';
 
 function DailyQuizContent() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const semester = parseInt(searchParams.get('semester') || '1');
@@ -108,15 +108,23 @@ function DailyQuizContent() {
   const [canTakeQuiz, setCanTakeQuiz] = useState(true);
   const [uniqueLernziele, setUniqueLernziele] = useState<Array<{id: string, slug: string, titel: string, fach?: {name: string}}>>([]);
   const [partialAnswerInfo, setPartialAnswerInfo] = useState<{correctCount: number, totalCount: number} | null>(null);
+  const [leaderboard, setLeaderboard] = useState<Array<{rank: number, username: string, score: number, totalPoints: number}>>([]);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [quizDate, setQuizDate] = useState<string>(''); // Speichert das Quiz-Datum für diese Session
+  const [userResult, setUserResult] = useState<{score: number, totalPoints: number, totalQuestions: number} | null>(null);
+  const [blurredResult, setBlurredResult] = useState(true); // State für Blur-Effekt beim ersten Mal
 
   useEffect(() => {
+    // Warte bis Auth geladen ist, bevor wir zum Login weiterleiten
+    if (authLoading) return;
+
     if (!user) {
       router.push('/login');
       return;
     }
 
     checkLastQuizDate();
-  }, [user, semester, router]);
+  }, [user, semester, router, authLoading]);
 
   // Lade gespeicherten Progress beim Start
   useEffect(() => {
@@ -140,27 +148,87 @@ function DailyQuizContent() {
         console.error('Fehler beim Laden des Quiz-Fortschritts:', error);
       }
     }
+
+    // Lade Blur-State für Quiz-Ergebnis
+    if (user) {
+      const savedBlurState = localStorage.getItem(`daily-quiz-blur-${user.id}-${semester}`);
+      if (savedBlurState) {
+        try {
+          const blurData = JSON.parse(savedBlurState);
+          const today = new Date().toISOString().split('T')[0];
+          // Nur laden wenn vom gleichen Tag
+          if (blurData.date === today) {
+            setBlurredResult(blurData.blurred);
+          }
+        } catch (error) {
+          console.error('Fehler beim Laden des Blur-States:', error);
+        }
+      }
+    }
   }, [user, semester, questions.length]);
 
   const checkLastQuizDate = async () => {
     if (!user) return;
 
     try {
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('last_quiz_date')
-        .eq('id', user.id)
+      // Prüfe ob Benutzer heute bereits ein Quiz absolviert hat
+      const quizDate = getCurrentQuizDate();
+
+      const { data: sessionData } = await supabase
+        .from('daily_quiz_sessions')
+        .select('id, question_ids')
+        .eq('quiz_date', quizDate)
+        .eq('semester', semester)
         .single();
 
-      const today = new Date().toISOString().split('T')[0];
+      if (sessionData) {
+        const { data: resultData } = await supabase
+          .from('daily_quiz_results')
+          .select('score, total_points')
+          .eq('user_id', user.id)
+          .eq('session_id', sessionData.id)
+          .single();
 
-      if (data?.last_quiz_date === today) {
-        setCanTakeQuiz(false);
-        setLoading(false);
-      } else {
-        setCanTakeQuiz(true);
-        loadDailyQuiz();
+        if (resultData) {
+          // Quiz wurde bereits absolviert - lade Ergebnisse und Lernziele
+          setUserResult({
+            score: resultData.score,
+            totalPoints: resultData.total_points,
+            totalQuestions: sessionData.question_ids?.length || 20
+          });
+
+          // Lade Lernziele für die Quiz-Fragen
+          if (sessionData.question_ids && sessionData.question_ids.length > 0) {
+            const { data: questionsData } = await supabase
+              .from('questions')
+              .select('lernziel_id')
+              .in('id', sessionData.question_ids);
+
+            if (questionsData) {
+              const lernzielIds = [...new Set(questionsData.map(q => q.lernziel_id).filter(Boolean))];
+
+              if (lernzielIds.length > 0) {
+                const { data: lernzieleData } = await supabase
+                  .from('lernziele')
+                  .select('id, slug, titel, fach:module!lernziele_fach_id_fkey(name)')
+                  .in('id', lernzielIds);
+
+                if (lernzieleData && lernzieleData.length > 0) {
+                  setUniqueLernziele(lernzieleData as any[]);
+                }
+              }
+            }
+          }
+
+          await loadLeaderboard();
+          setCanTakeQuiz(false);
+          setLoading(false);
+          return;
+        }
       }
+
+      setCanTakeQuiz(true);
+      loadDailyQuiz();
     } catch (error) {
       console.error('Fehler beim Prüfen des Quiz-Datums:', error);
       loadDailyQuiz();
@@ -170,55 +238,24 @@ function DailyQuizContent() {
   const loadDailyQuiz = async () => {
     setLoading(true);
     try {
-      const moduleGrouped = await getModuleGroupedBySemester();
-      const semesterModule = moduleGrouped[semester] || [];
+      // Lade Quiz-Fragen vom Server (alle Benutzer bekommen die gleichen Fragen)
+      const response = await fetch(`/api/daily-quiz/questions?semester=${semester}`);
 
-      if (semesterModule.length === 0) {
-        console.log('Keine Module für Semester', semester);
-        setLoading(false);
-        return;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));
+        console.error('API Error:', response.status, errorData);
+        throw new Error(`Fehler beim Laden des Quiz: ${errorData.error || response.statusText}`);
       }
 
-      const allQuestions: Question[] = [];
-
-      // Sammle alle Fragen aus allen Modulen
-      for (const modul of semesterModule) {
-        const moduleQuestions = await getQuestionsByModule(modul.id);
-        allQuestions.push(...moduleQuestions);
-      }
-
-      // Mische alle Fragen und wähle 20 aus
-      const shuffled = allQuestions.sort(() => Math.random() - 0.5);
-      const selected = shuffled.slice(0, 20);
-
-      // Shuffle Optionen für Multiple Choice Fragen
-      const processedQuestions = selected.map(q => {
-        // Nur shufflen wenn es options gibt (Multiple Choice)
-        if (!q.options || !Array.isArray(q.options) || q.answer !== null) {
-          return q;
-        }
-
-        const indices = [0, 1, 2, 3];
-        const shuffledIndices = indices.sort(() => Math.random() - 0.5);
-
-        const shuffledOptions = shuffledIndices.map(i => q.options[i]);
-
-        const shuffledCorrectIndices = q.correct_indices.map((correctIdx: number) => {
-          return shuffledIndices.indexOf(correctIdx);
-        });
-
-        return {
-          ...q,
-          options: shuffledOptions,
-          correct_indices: shuffledCorrectIndices
-        };
-      });
+      const data = await response.json();
+      const processedQuestions = data.questions || [];
 
       setQuestions(processedQuestions);
       setAnsweredQuestions(new Array(processedQuestions.length).fill(false));
+      setQuizDate(data.quizDate); // Speichere das Quiz-Datum für diese Session
 
       // Extrahiere eindeutige Lernziele aus den Fragen
-      const lernzielIds = new Set(processedQuestions.map(q => q.lernziel_id).filter(Boolean));
+      const lernzielIds = new Set(processedQuestions.map((q: Question) => q.lernziel_id).filter(Boolean));
 
       // Lade Lernziel-Details mit Modul-Information
       if (lernzielIds.size > 0) {
@@ -232,15 +269,11 @@ function DailyQuizContent() {
         }
 
         if (lernzieleData && lernzieleData.length > 0) {
-          console.log('Geladene Lernziele:', lernzieleData);
           setUniqueLernziele(lernzieleData as any[]);
-          console.log('Transformierte Lernziele:', lernzieleData);
-        } else {
-          console.log('Keine Lernziele gefunden für IDs:', Array.from(lernzielIds));
         }
       }
 
-      console.log(`Daily Quiz geladen: ${selected.length} Fragen aus ${semesterModule.length} Modulen`);
+      console.log(`Daily Quiz geladen: ${processedQuestions.length} Fragen für ${formatQuizDate(data.quizDate)}`);
     } catch (error) {
       console.error('Fehler beim Laden des Daily Quiz:', error);
     } finally {
@@ -353,11 +386,24 @@ function DailyQuizContent() {
       saveProgress(newIndex);
     } else {
       await saveQuizCompletion();
+      await loadLeaderboard();
       setShowResult(true);
       // Lösche Progress nach Abschluss
       if (user) {
         localStorage.removeItem(`daily-quiz-${user.id}-${semester}`);
       }
+    }
+  };
+
+  const loadLeaderboard = async () => {
+    try {
+      const response = await fetch(`/api/daily-quiz/leaderboard?semester=${semester}`);
+      if (response.ok) {
+        const data = await response.json();
+        setLeaderboard(data.leaderboard || []);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Rangliste:', error);
     }
   };
 
@@ -378,67 +424,272 @@ function DailyQuizContent() {
   const saveQuizCompletion = async () => {
     if (!user) return;
 
-    const today = new Date().toISOString().split('T')[0];
-
     try {
-      await supabase
-        .from('user_profiles')
-        .upsert({
-          id: user.id,
-          last_quiz_date: today,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'id'
-        });
+      // Hole aktuelles Auth-Token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Kein gültiges Auth-Token');
+      }
+
+      console.log('Speichere Quiz-Ergebnis:', { semester, score, totalPoints, quizDate });
+
+      // Sende Ergebnis an Server
+      const response = await fetch('/api/daily-quiz/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          semester,
+          score,
+          totalPoints,
+          quizDate // Sende das gespeicherte Quiz-Datum mit
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));
+        console.error('Server-Fehler:', response.status, errorData);
+        throw new Error(`Fehler beim Speichern: ${errorData.error || response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('Quiz-Ergebnis gespeichert:', data);
     } catch (error) {
-      console.error('Fehler beim Speichern des Quiz-Datums:', error);
+      console.error('Fehler beim Speichern des Quiz-Ergebnisses:', error);
+      // Zeige Fehler dem Benutzer, aber breche nicht ab
+      alert(`Fehler beim Speichern: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`);
     }
   };
+
+  // Zeige Loading während Auth lädt
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
+          <p className="text-gray-600">Authentifizierung...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) return null;
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-gray-600">Lade Daily Quiz...</p>
         </div>
       </div>
     );
   }
 
-  if (!canTakeQuiz) {
+  const toggleBlur = () => {
+    const newBlurState = !blurredResult;
+    setBlurredResult(newBlurState);
+
+    // Speichere Blur-State in localStorage
+    if (user) {
+      const today = new Date().toISOString().split('T')[0];
+      localStorage.setItem(`daily-quiz-blur-${user.id}-${semester}`, JSON.stringify({
+        date: today,
+        blurred: newBlurState
+      }));
+    }
+  };
+
+  if (!canTakeQuiz && userResult) {
+    const percentage = Math.round((userResult.score / userResult.totalQuestions) * 100);
+
+    // Leistungskategorien mit passenden Nachrichten
+    let title: string;
+    let message: string;
+    let icon: React.ReactElement;
+
+    if (percentage >= 90) {
+      title = 'Herausragend! 🏆';
+      message = 'Du hast das Quiz mit Bravour gemeistert! Dein Wissen ist beeindruckend.';
+      icon = <Trophy className="w-20 h-20 text-yellow-500" />;
+    } else if (percentage >= 75) {
+      title = 'Super gemacht! 🎉';
+      message = 'Sehr gut! Du hast den Großteil der Fragen richtig beantwortet.';
+      icon = <Trophy className="w-20 h-20 text-green-500" />;
+    } else if (percentage >= 60) {
+      title = 'Gut gemacht! ✓';
+      message = 'Solide Leistung! Du bist auf dem richtigen Weg.';
+      icon = <CheckCircle className="w-20 h-20 text-blue-500" />;
+    } else if (percentage >= 40) {
+      title = 'Guter Einstieg! 💪';
+      message = 'Du bist auf einem guten Weg! Schau dir die Lerninhalte nochmal an, um morgen noch besser abzuschneiden.';
+      icon = <Brain className="w-20 h-20 text-orange-500" />;
+    } else if (percentage >= 20) {
+      title = 'Jeder Anfang ist schwer! 🌱';
+      message = 'Lass dich nicht entmutigen! Nimm dir Zeit für die Lerninhalte und probiere es morgen nochmal. Du wirst sehen, es wird besser!';
+      icon = <Brain className="w-20 h-20 text-orange-500" />;
+    } else {
+      title = 'Bleib dran! 📚';
+      message = 'Rom wurde auch nicht an einem Tag erbaut! Gehe die Lerninhalte Schritt für Schritt durch und versuche es morgen wieder. Du schaffst das!';
+      icon = <Brain className="w-20 h-20 text-blue-500" />;
+    }
+
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full border-2 border-purple-200">
-          <CardContent className="p-12 text-center">
-            <Trophy className="w-16 h-16 text-yellow-500 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-800 mb-2">
-              Quiz bereits absolviert!
-            </h3>
-            <p className="text-gray-600 mb-4">
-              Du hast dein Daily Quiz heute bereits abgeschlossen.
-            </p>
-            <p className="text-sm text-gray-500 mb-6">
-              Das nächste Quiz ist um 00:00 Uhr verfügbar.
-            </p>
-            <Button
-              onClick={() => router.push('/explore')}
-              className="bg-gradient-to-r from-purple-600 to-blue-600"
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Zurück zum Lernen
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-8 px-4">
+        <div className="max-w-2xl mx-auto">
+          <Card className="border-2 border-border">
+            <CardHeader className="text-center pb-2">
+              <div className="mx-auto mb-4">
+                {icon}
+              </div>
+              <CardTitle className="text-3xl">
+                {title}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-6">
+              <div className="bg-muted rounded-lg p-6 relative">
+                <div className={`transition-all ${blurredResult ? 'blur-md' : ''}`}>
+                  <p className="text-5xl font-bold text-foreground font-serif mb-2">
+                    {userResult.score} / {userResult.totalQuestions}
+                  </p>
+                  <p className="text-gray-600">richtige Antworten</p>
+                  <p className="text-2xl font-semibold text-primary mt-2">
+                    {percentage}%
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Gesamt: {userResult.totalPoints} Punkte
+                  </p>
+                </div>
+                {blurredResult && (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Button
+                      onClick={toggleBlur}
+                      variant="outline"
+                      size="lg"
+                      className="bg-white/90 backdrop-blur-sm"
+                    >
+                      <Eye className="w-4 h-4 mr-2" />
+                      Ergebnis anzeigen
+                    </Button>
+                  </div>
+                )}
+                {!blurredResult && (
+                  <Button
+                    onClick={toggleBlur}
+                    variant="ghost"
+                    size="sm"
+                    className="mt-2"
+                  >
+                    <EyeOff className="w-4 h-4 mr-2" />
+                    Ausblenden
+                  </Button>
+                )}
+              </div>
+
+              <p className="text-gray-600 text-lg">
+                {message}
+              </p>
+
+              <p className="text-sm text-gray-500">
+                Das nächste Quiz ist um 04:00 Uhr verfügbar.
+              </p>
+
+              {/* Lernziele Section */}
+              {uniqueLernziele.length > 0 && (
+                <div className="bg-white border-2 border-border rounded-lg p-4 text-left">
+                  <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-primary" />
+                    Behandelte Lernziele in diesem Quiz:
+                  </h3>
+                  <div className="space-y-2">
+                    {uniqueLernziele.map(lz => (
+                      <Link
+                        key={lz.id}
+                        href={`/lernziel/${lz.slug}`}
+                        className="block p-2 rounded hover:bg-primary/10 transition-colors text-primary hover:text-foreground text-sm"
+                      >
+                        → {lz.fach?.name && <span className="text-gray-500">{lz.fach.name}: </span>}{lz.titel}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Leaderboard Section */}
+              {leaderboard.length > 0 && (
+                <div className="bg-white border-2 border-border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-yellow-500" />
+                      Heutige Rangliste
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowLeaderboard(!showLeaderboard)}
+                    >
+                      {showLeaderboard ? 'Ausblenden' : 'Anzeigen'}
+                    </Button>
+                  </div>
+
+                  {showLeaderboard && (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {leaderboard.map((entry, index) => {
+                        const isCurrentUser = user && entry.username === user.email?.split('@')[0];
+                        return (
+                          <div
+                            key={index}
+                            className={`flex items-center justify-between p-2 rounded ${
+                              isCurrentUser ? 'bg-primary/10 border border-purple-200' : 'bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`font-bold w-8 text-center ${
+                                entry.rank === 1 ? 'text-yellow-600' :
+                                entry.rank === 2 ? 'text-gray-500' :
+                                entry.rank === 3 ? 'text-orange-600' :
+                                'text-gray-400'
+                              }`}>
+                                {entry.rank === 1 ? '🥇' :
+                                 entry.rank === 2 ? '🥈' :
+                                 entry.rank === 3 ? '🥉' :
+                                 `#${entry.rank}`}
+                              </span>
+                              <span className={`text-sm ${isCurrentUser ? 'font-semibold text-primary' : 'text-gray-700'}`}>
+                                {entry.username}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-gray-600">
+                              <span>{entry.totalPoints} Punkte</span>
+                              <span className="text-xs text-gray-400">({entry.score}/{userResult.totalQuestions})</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <Button
+                onClick={() => router.push('/explore')}
+                className="bg-primary"
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Zurück zum Lernen
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
           <CardContent className="p-12 text-center">
             <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -467,39 +718,37 @@ function DailyQuizContent() {
     let title: string;
     let message: string;
     let icon: React.ReactElement;
-    let badgeColor: string;
 
     if (percentage >= 90) {
       title = 'Herausragend! 🏆';
       message = 'Du hast das Quiz mit Bravour gemeistert! Dein Wissen ist beeindruckend.';
       icon = <Trophy className="w-20 h-20 text-yellow-500" />;
-      badgeColor = 'bg-yellow-50 text-yellow-700 border-yellow-300';
     } else if (percentage >= 75) {
       title = 'Super gemacht! 🎉';
       message = 'Sehr gut! Du hast den Großteil der Fragen richtig beantwortet.';
       icon = <Trophy className="w-20 h-20 text-green-500" />;
-      badgeColor = 'bg-green-50 text-green-700 border-green-300';
     } else if (percentage >= 60) {
       title = 'Gut gemacht! ✓';
       message = 'Solide Leistung! Du bist auf dem richtigen Weg.';
       icon = <CheckCircle className="w-20 h-20 text-blue-500" />;
-      badgeColor = 'bg-blue-50 text-blue-700 border-blue-300';
     } else if (percentage >= 40) {
-      title = 'Das war ein Anfang! 💪';
-      message = 'Nicht schlecht, aber da geht noch mehr! Wiederhole die Lerninhalte und versuch es morgen erneut.';
+      title = 'Guter Einstieg! 💪';
+      message = 'Du bist auf einem guten Weg! Schau dir die Lerninhalte nochmal an, um morgen noch besser abzuschneiden.';
       icon = <Brain className="w-20 h-20 text-orange-500" />;
-      badgeColor = 'bg-orange-50 text-orange-700 border-orange-300';
+    } else if (percentage >= 20) {
+      title = 'Jeder Anfang ist schwer! 🌱';
+      message = 'Lass dich nicht entmutigen! Nimm dir Zeit für die Lerninhalte und probiere es morgen nochmal. Du wirst sehen, es wird besser!';
+      icon = <Brain className="w-20 h-20 text-orange-500" />;
     } else {
-      title = 'Weiter üben! 📚';
-      message = 'Das war noch nicht so gut. Schau dir die Lerninhalte nochmal an und versuch es morgen erneut!';
-      icon = <Brain className="w-20 h-20 text-red-500" />;
-      badgeColor = 'bg-red-50 text-red-700 border-red-300';
+      title = 'Bleib dran! 📚';
+      message = 'Rom wurde auch nicht an einem Tag erbaut! Gehe die Lerninhalte Schritt für Schritt durch und versuche es morgen wieder. Du schaffst das!';
+      icon = <Brain className="w-20 h-20 text-blue-500" />;
     }
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 py-8 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-8 px-4">
         <div className="max-w-2xl mx-auto">
-          <Card className="border-2 border-purple-200">
+          <Card className="border-2 border-border">
             <CardHeader className="text-center pb-2">
               <div className="mx-auto mb-4">
                 {icon}
@@ -509,32 +758,23 @@ function DailyQuizContent() {
               </CardTitle>
             </CardHeader>
             <CardContent className="text-center space-y-6">
-              <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6">
-                <p className="text-5xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent mb-2">
+              <div className="bg-muted rounded-lg p-6">
+                <p className="text-5xl font-bold text-foreground font-serif mb-2">
                   {score} / {questions.length}
                 </p>
                 <p className="text-gray-600">richtige Antworten</p>
-                <p className="text-2xl font-semibold text-purple-600 mt-2">
+                <p className="text-2xl font-semibold text-primary mt-2">
                   {percentage}%
                 </p>
               </div>
 
-              <div className="space-y-2">
-                <Badge
-                  variant="outline"
-                  className={`text-lg px-4 py-2 ${badgeColor}`}
-                >
-                  {percentage >= 60 ? 'Bestanden ✓' : 'Nicht bestanden'}
-                </Badge>
-              </div>
-
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-lg">
                 {message}
               </p>
 
-              <div className="bg-white border-2 border-purple-200 rounded-lg p-4 text-left">
+              <div className="bg-white border-2 border-border rounded-lg p-4 text-left">
                 <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-purple-600" />
+                  <BookOpen className="w-5 h-5 text-primary" />
                   Behandelte Lernziele in diesem Quiz:
                 </h3>
                 {uniqueLernziele.length > 0 ? (
@@ -543,7 +783,7 @@ function DailyQuizContent() {
                       <Link
                         key={lz.id}
                         href={`/lernziel/${lz.slug}`}
-                        className="block p-2 rounded hover:bg-purple-50 transition-colors text-purple-600 hover:text-purple-800 text-sm"
+                        className="block p-2 rounded hover:bg-primary/10 transition-colors text-primary hover:text-foreground text-sm"
                       >
                         → {lz.fach?.name && <span className="text-gray-500">{lz.fach.name}: </span>}{lz.titel}
                       </Link>
@@ -554,9 +794,65 @@ function DailyQuizContent() {
                 )}
               </div>
 
+              {/* Leaderboard Section */}
+              {leaderboard.length > 0 && (
+                <div className="bg-white border-2 border-border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <h3 className="font-semibold text-gray-800 flex items-center gap-2">
+                      <Trophy className="w-5 h-5 text-yellow-500" />
+                      Heutige Rangliste
+                    </h3>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setShowLeaderboard(!showLeaderboard)}
+                    >
+                      {showLeaderboard ? 'Ausblenden' : 'Anzeigen'}
+                    </Button>
+                  </div>
+
+                  {showLeaderboard && (
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {leaderboard.map((entry, index) => {
+                        const isCurrentUser = user && entry.username === user.email?.split('@')[0];
+                        return (
+                          <div
+                            key={index}
+                            className={`flex items-center justify-between p-2 rounded ${
+                              isCurrentUser ? 'bg-primary/10 border border-purple-200' : 'bg-gray-50'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`font-bold w-8 text-center ${
+                                entry.rank === 1 ? 'text-yellow-600' :
+                                entry.rank === 2 ? 'text-gray-500' :
+                                entry.rank === 3 ? 'text-orange-600' :
+                                'text-gray-400'
+                              }`}>
+                                {entry.rank === 1 ? '🥇' :
+                                 entry.rank === 2 ? '🥈' :
+                                 entry.rank === 3 ? '🥉' :
+                                 `#${entry.rank}`}
+                              </span>
+                              <span className={`text-sm ${isCurrentUser ? 'font-semibold text-primary' : 'text-gray-700'}`}>
+                                {entry.username}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 text-sm text-gray-600">
+                              <span>{entry.totalPoints} Punkte</span>
+                              <span className="text-xs text-gray-400">({entry.score}/{questions.length})</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <Button
                 onClick={() => router.push('/explore')}
-                className="bg-gradient-to-r from-purple-600 to-blue-600"
+                className="bg-primary"
               >
                 <Home className="w-4 h-4 mr-2" />
                 Zurück zum Lernen
@@ -573,18 +869,18 @@ function DailyQuizContent() {
   const isMath = isMathQuestion(currentQuestion);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
-              <Trophy className="w-6 h-6 text-purple-600" />
+              <Trophy className="w-6 h-6 text-primary" />
               <h1 className="text-2xl font-bold text-gray-800">
                 Daily Quiz - {semester}. Fachsemester
               </h1>
             </div>
-            <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary">
               Frage {currentQuestionIndex + 1} / {questions.length}
             </Badge>
           </div>
@@ -592,7 +888,7 @@ function DailyQuizContent() {
         </div>
 
         {/* Frage Card */}
-        <Card className="border-2 border-purple-100 mb-6">
+        <Card className="border-2 border-border mb-6">
           <CardHeader>
             <div className="flex items-start justify-between gap-4">
               <CardTitle className="text-xl leading-relaxed flex-1">
@@ -662,7 +958,7 @@ function DailyQuizContent() {
                 />
 
                 {/* Extrazeichen-Tabelle */}
-                <div className="border-2 border-gray-200 rounded-lg p-3">
+                <div className="border-2 border-border rounded-lg p-3">
                   <p className="text-xs font-semibold text-gray-600 mb-2">Häufig genutzte Zeichen:</p>
                   <div className="grid grid-cols-7 gap-1 mb-3">
                     {MATH_SYMBOLS.häufig.map((item) => (
@@ -670,7 +966,7 @@ function DailyQuizContent() {
                         key={item.symbol}
                         onClick={() => insertSymbol(item.symbol)}
                         disabled={submitted}
-                        className="px-2 py-1 text-sm border border-gray-300 rounded hover:bg-purple-50 hover:border-purple-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-2 py-1 text-sm border border-border rounded hover:bg-primary/10 hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         title={item.label}
                       >
                         {item.symbol}
@@ -684,7 +980,7 @@ function DailyQuizContent() {
                         key={item.symbol}
                         onClick={() => insertSymbol(item.symbol)}
                         disabled={submitted}
-                        className="px-2 py-1 text-sm border border-gray-300 rounded hover:bg-purple-50 hover:border-purple-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-2 py-1 text-sm border border-border rounded hover:bg-primary/10 hover:border-primary disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                         title={item.label}
                       >
                         {item.symbol}
@@ -716,8 +1012,8 @@ function DailyQuizContent() {
                               ? 'border-red-500 bg-red-50'
                               : 'border-gray-200 bg-gray-50'
                             : isSelected
-                            ? 'border-purple-500 bg-purple-50'
-                            : 'border-gray-200 bg-white hover:border-purple-300'
+                            ? 'border-primary bg-primary/10'
+                            : 'border-gray-200 bg-white hover:border-primary'
                           }
                         `}
                       >
@@ -733,7 +1029,7 @@ function DailyQuizContent() {
                                 ? 'border-red-500 bg-red-500'
                                 : 'border-gray-300'
                               : isSelected
-                              ? 'border-purple-500 bg-purple-500'
+                              ? 'border-primary bg-primary/100'
                               : 'border-gray-300'
                             }
                           `}>
@@ -807,7 +1103,7 @@ function DailyQuizContent() {
               <Button
                 onClick={handleSubmit}
                 disabled={isMath ? mathAnswer.trim() === '' : selectedAnswers.length === 0}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
+                className="w-full bg-primary"
                 size="lg"
               >
                 Antwort überprüfen
@@ -815,7 +1111,7 @@ function DailyQuizContent() {
             ) : (
               <Button
                 onClick={handleNextQuestion}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-600"
+                className="w-full bg-primary"
                 size="lg"
               >
                 {currentQuestionIndex < questions.length - 1 ? 'Nächste Frage' : 'Quiz beenden'}
@@ -842,9 +1138,9 @@ function DailyQuizContent() {
 export default function DailyQuizPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-gray-600">Lade Daily Quiz...</p>
         </div>
       </div>
