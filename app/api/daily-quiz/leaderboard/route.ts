@@ -79,9 +79,33 @@ export async function GET(request: NextRequest) {
 
     const totalQuestions = sessionDetails?.question_ids?.length || 20;
 
+    // Berechne maximale Punktzahl aus den Fragen
+    let maxPoints = totalQuestions; // Fallback: 1 Punkt pro Frage
+    if (sessionDetails?.question_ids && sessionDetails.question_ids.length > 0) {
+      const { data: questionsData } = await supabase
+        .from('questions')
+        .select('answer, correct_indices')
+        .in('id', sessionDetails.question_ids);
+
+      if (questionsData) {
+        maxPoints = questionsData.reduce((sum: number, q: any) => {
+          if (q.answer !== null) {
+            return sum + 1; // Math-Frage: 1 Punkt
+          }
+          const correctIndices = typeof q.correct_indices === 'string'
+            ? JSON.parse(q.correct_indices)
+            : q.correct_indices;
+          return sum + (Array.isArray(correctIndices) ? correctIndices.length : 1);
+        }, 0);
+      }
+    }
+
     const avgScore = totalParticipants > 0 ? totalScoreSum / totalParticipants : 0;
     const avgPoints = totalParticipants > 0 ? totalPointsSum / totalParticipants : 0;
-    const avgPercentage = totalParticipants > 0 ? Math.round((avgScore / totalQuestions) * 100) : 0;
+    // Prozentsatz basierend auf Punkten (nicht auf vollständig richtigen Antworten)
+    const avgPercentage = totalParticipants > 0 && maxPoints > 0
+      ? Math.round((avgPoints / maxPoints) * 100)
+      : 0;
 
     // Bestimme Quiz-Schwierigkeit basierend auf Durchschnitt
     let difficultyLevel: 'easy' | 'medium' | 'hard';
@@ -106,8 +130,10 @@ export async function GET(request: NextRequest) {
         : (result.user?.username || 'Anonymer Nutzer'),
       score: result.score,
       totalPoints: result.total_points,
+      maxPoints,
       totalQuestions,
-      percentage: Math.round((result.score / totalQuestions) * 100),
+      // Prozentsatz basierend auf Punkten (nicht auf vollständig richtigen Antworten)
+      percentage: maxPoints > 0 ? Math.round((result.total_points / maxPoints) * 100) : 0,
       completedAt: result.completed_at,
       isAnonymous: result.user?.anonymous_in_leaderboard || false,
       userId: result.user_id
@@ -120,6 +146,7 @@ export async function GET(request: NextRequest) {
       avgPoints: Math.round(avgPoints * 10) / 10,
       avgPercentage,
       totalQuestions,
+      maxPoints,
       difficultyLevel,
       difficultyMessage
     };

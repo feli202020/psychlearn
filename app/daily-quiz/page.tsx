@@ -114,7 +114,7 @@ function DailyQuizContent() {
   const [leaderboard, setLeaderboard] = useState<Array<{rank: number, username: string, score: number, totalPoints: number, isAnonymous?: boolean, userId?: string}>>([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [quizDate, setQuizDate] = useState<string>(''); // Speichert das Quiz-Datum für diese Session
-  const [userResult, setUserResult] = useState<{score: number, totalPoints: number, totalQuestions: number} | null>(null);
+  const [userResult, setUserResult] = useState<{score: number, totalPoints: number, totalQuestions: number, maxPoints: number} | null>(null);
   const [blurredResult, setBlurredResult] = useState(true); // State für Blur-Effekt beim ersten Mal
   const [statistics, setStatistics] = useState<{
     totalParticipants: number;
@@ -122,6 +122,7 @@ function DailyQuizContent() {
     avgPoints: number;
     avgPercentage: number;
     totalQuestions: number;
+    maxPoints: number;
     difficultyLevel: 'easy' | 'medium' | 'hard';
     difficultyMessage: string;
   } | null>(null);
@@ -203,10 +204,34 @@ function DailyQuizContent() {
 
         if (resultData) {
           // Quiz wurde bereits absolviert - lade Ergebnisse und Lernziele
+          let maxPoints = sessionData.question_ids?.length || 20; // Fallback
+
+          // Lade Fragen für maxPoints-Berechnung und Lernziele
+          if (sessionData.question_ids && sessionData.question_ids.length > 0) {
+            const { data: questionsData } = await supabase
+              .from('questions')
+              .select('lernziel_id, answer, correct_indices')
+              .in('id', sessionData.question_ids);
+
+            if (questionsData) {
+              // Berechne maxPoints
+              maxPoints = questionsData.reduce((sum: number, q: any) => {
+                if (q.answer !== null) {
+                  return sum + 1; // Math-Frage
+                }
+                const correctIndices = typeof q.correct_indices === 'string'
+                  ? JSON.parse(q.correct_indices)
+                  : q.correct_indices;
+                return sum + (Array.isArray(correctIndices) ? correctIndices.length : 1);
+              }, 0);
+            }
+          }
+
           setUserResult({
             score: resultData.score,
             totalPoints: resultData.total_points,
-            totalQuestions: sessionData.question_ids?.length || 20
+            totalQuestions: sessionData.question_ids?.length || 20,
+            maxPoints
           });
 
           // Lade Lernziele für die Quiz-Fragen
@@ -516,7 +541,10 @@ function DailyQuizContent() {
   };
 
   if (!canTakeQuiz && userResult) {
-    const percentage = Math.round((userResult.score / userResult.totalQuestions) * 100);
+    // Prozentsatz basierend auf Punkten (nicht auf vollständig richtigen Antworten)
+    const percentage = userResult.maxPoints > 0
+      ? Math.round((userResult.totalPoints / userResult.maxPoints) * 100)
+      : 0;
 
     // Leistungskategorien mit passenden Nachrichten
     let title: string;
@@ -565,14 +593,14 @@ function DailyQuizContent() {
               <div className="bg-muted rounded-lg p-6 relative">
                 <div className={`transition-all ${blurredResult ? 'blur-md' : ''}`}>
                   <p className="text-5xl font-bold text-foreground font-serif mb-2">
-                    {userResult.score} / {userResult.totalQuestions}
+                    {userResult.totalPoints} / {userResult.maxPoints}
                   </p>
-                  <p className="text-gray-600">richtige Antworten</p>
+                  <p className="text-gray-600">Punkte</p>
                   <p className="text-2xl font-semibold text-primary mt-2">
                     {percentage}%
                   </p>
                   <p className="text-sm text-gray-500 mt-2">
-                    Gesamt: {userResult.totalPoints} Punkte
+                    {userResult.score} von {userResult.totalQuestions} Fragen vollständig richtig
                   </p>
                 </div>
                 {blurredResult && (
@@ -787,7 +815,15 @@ function DailyQuizContent() {
   }
 
   if (showResult) {
-    const percentage = Math.round((score / questions.length) * 100);
+    // Berechne maxPoints aus den Fragen
+    const maxPoints = questions.reduce((sum, q) => {
+      if (q.answer !== null) {
+        return sum + 1; // Math-Frage
+      }
+      return sum + (q.correct_indices?.length || 1);
+    }, 0);
+    // Prozentsatz basierend auf Punkten (nicht auf vollständig richtigen Antworten)
+    const percentage = maxPoints > 0 ? Math.round((totalPoints / maxPoints) * 100) : 0;
 
     // Leistungskategorien mit passenden Nachrichten
     let title: string;
@@ -835,11 +871,14 @@ function DailyQuizContent() {
             <CardContent className="text-center space-y-6">
               <div className="bg-muted rounded-lg p-6">
                 <p className="text-5xl font-bold text-foreground font-serif mb-2">
-                  {score} / {questions.length}
+                  {totalPoints} / {maxPoints}
                 </p>
-                <p className="text-gray-600">richtige Antworten</p>
+                <p className="text-gray-600">Punkte</p>
                 <p className="text-2xl font-semibold text-primary mt-2">
                   {percentage}%
+                </p>
+                <p className="text-sm text-gray-500 mt-2">
+                  {score} von {questions.length} Fragen vollständig richtig
                 </p>
               </div>
 

@@ -111,6 +111,17 @@ export async function GET(request: NextRequest) {
       correct_indices: typeof q.correct_indices === 'string' ? JSON.parse(q.correct_indices) : q.correct_indices,
     })) || [];
 
+    // Berechne maximale Punktzahl für diese Session
+    // Math-Fragen (answer !== null): 1 Punkt
+    // Multiple-Choice: Anzahl der richtigen Antworten (correct_indices.length)
+    const maxPoints = parsedQuestions.reduce((sum: number, q: any) => {
+      if (q.answer !== null) {
+        return sum + 1; // Math-Frage
+      }
+      const correctIndices = Array.isArray(q.correct_indices) ? q.correct_indices : [];
+      return sum + correctIndices.length;
+    }, 0);
+
     // Sortiere nach der Reihenfolge in questionIds
     const orderedQuestions = questionIds
       .map(id => parsedQuestions.find((q: any) => q.id === id))
@@ -144,7 +155,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       quizDate,
       semester,
-      questions: processedQuestions
+      questions: processedQuestions,
+      maxPoints
     });
 
   } catch (error) {
