@@ -13,7 +13,13 @@
       "Bash(node apply_insert_policy.js:*)",
       "Bash(node debug_quiz_session.js:*)",
       "Bash(curl:*)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(git status:*)",
+      "Bash(npx supabase:*)",
+      "Bash(supabase --version:*)",
+      "Bash(supabase status:*)",
+      "Bash(psql:*)",
+      "Bash(grep:*)"
     ]
   }
 }

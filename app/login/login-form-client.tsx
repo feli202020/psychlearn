@@ -88,7 +88,7 @@ function LoginForm() {
                 className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2"
               />
               <label htmlFor="rememberMe" className="ml-2 text-sm text-gray-700">
-                Angemeldet bleiben (1 Monat)
+                Angemeldet bleiben
               </label>
             </div>
 

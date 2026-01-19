@@ -5,16 +5,15 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/button';
 import { Brain, BookOpen, LogOut, Settings, Trophy } from 'lucide-react';
-import { supabase } from '@/lib/supabase';
 import DailyQuizWidget from './DailyQuizWidget';
 
 export default function Navigation() {
   const pathname = usePathname();
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    window.location.href = '/';
+    await signOut();
+    window.location.href = '/login';
   };
 
   const isActive = (path: string) => pathname === path;

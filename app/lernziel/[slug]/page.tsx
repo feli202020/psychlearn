@@ -17,17 +17,24 @@ import MultipleChoiceBio from '@/components/aufgaben/MultipleChoiceBio';
 import MathInputAdvanced from '@/components/aufgaben/MathInputAdvanced';
 
 // Modul-IDs und ihre Fragenanzahl-Konfiguration
-const MODULE_CONFIG = {
+const MODULE_CONFIG: Record<string, { questionsToShow: number }> = {
   '00000000-0000-0000-0000-000000000102': { // Biologische Psychologie
     questionsToShow: 20,
-    questionType: 'multiple-choice'
   },
-  '00000000-0000-0000-0000-000000000101': { // Quantitative Methoden I (KORRIGIERT!)
+  '00000000-0000-0000-0000-000000000101': { // Quantitative Methoden I
     questionsToShow: 10,
-    questionType: 'math'
+  },
+  '00000000-0000-0000-0000-000000000106': { // Quantitative Methoden II
+    questionsToShow: 10,
   },
   // Weitere Module können hier hinzugefügt werden
-} as const;
+};
+
+// Hilfsfunktion: Prüft ob eine Frage eine Math-Input-Frage ist
+// Eine Frage ist Math-Input, wenn das answer-Feld gefüllt ist
+const isMathQuestion = (question: any): boolean => {
+  return question.answer !== null && question.answer !== undefined;
+};
 
 // Zufällige Reihenfolge
 function shuffleArray<T>(array: T[]): T[] {
@@ -86,7 +93,7 @@ export default function LernzielDetailPage() {
   const [completing, setCompleting] = useState(false);
   const [fortschritt, setFortschritt] = useState<any>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
-  const [questionConfig, setQuestionConfig] = useState({ questionsToShow: 10, questionType: 'multiple-choice' });
+  const [questionConfig, setQuestionConfig] = useState({ questionsToShow: 10 });
 
   useEffect(() => {
     // Prüfe, ob User eingeloggt ist
@@ -103,9 +110,8 @@ export default function LernzielDetailPage() {
       
       if (lz) {
         // Konfiguration für dieses Modul laden
-        const config = MODULE_CONFIG[lz.fach.id as keyof typeof MODULE_CONFIG] || { 
-          questionsToShow: 10, 
-          questionType: 'multiple-choice' 
+        const config = MODULE_CONFIG[lz.fach.id] || {
+          questionsToShow: 10
         };
         setQuestionConfig(config);
 
@@ -156,12 +162,12 @@ export default function LernzielDetailPage() {
           
           // Wähle N zufällige Fragen basierend auf Modul-Konfiguration
           const initialSelection = selectRandomQuestions(parsed, config.questionsToShow);
-          
-          // Shuffle Optionen nur für Multiple Choice
-          const processedQuestions = config.questionType === 'multiple-choice'
-            ? initialSelection.map(q => shuffleOptions(q))
-            : initialSelection;
-            
+
+          // Shuffle Optionen nur für Multiple Choice Fragen (nicht für Math-Input)
+          const processedQuestions = initialSelection.map(q =>
+            isMathQuestion(q) ? q : shuffleOptions(q)
+          );
+
           setSelectedQuestions(processedQuestions);
         }
       }
@@ -208,9 +214,10 @@ export default function LernzielDetailPage() {
 
     // Wähle neue zufällige Fragen
     const newSelection = selectRandomQuestions(allQuestions, questionConfig.questionsToShow);
-    const processedQuestions = questionConfig.questionType === 'multiple-choice'
-      ? newSelection.map(q => shuffleOptions(q))
-      : newSelection;
+    // Shuffle Optionen nur für Multiple Choice Fragen (nicht für Math-Input)
+    const processedQuestions = newSelection.map(q =>
+      isMathQuestion(q) ? q : shuffleOptions(q)
+    );
     setSelectedQuestions(processedQuestions);
   };
 
@@ -263,12 +270,22 @@ export default function LernzielDetailPage() {
     <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-12">
       <div className="container mx-auto px-4 max-w-4xl">
 
-        <Link href="/explore">
-          <Button variant="ghost" className="mb-6">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Zurück zur Übersicht
-          </Button>
-        </Link>
+        <Button
+          variant="ghost"
+          className="mb-6"
+          onClick={() => {
+            if (lernziel?.fach) {
+              // Speichere Modul und Tab-Auswahl im sessionStorage
+              sessionStorage.setItem('explore_selected_modul', JSON.stringify(lernziel.fach));
+              sessionStorage.setItem('explore_active_tab', 'quiz');
+              sessionStorage.setItem('explore_expand_semester', lernziel.klasse.toString());
+            }
+            router.push('/explore');
+          }}
+        >
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Zurück zur Übersicht
+        </Button>
 
         {/* Header */}
         <Card className="mb-8 border-2 border-border">
@@ -338,8 +355,7 @@ export default function LernzielDetailPage() {
               <CardHeader>
                 <div className="flex justify-between items-center">
                   <CardTitle>
-                    {questionConfig.questionType === 'multiple-choice' ? 'Quiz' : 'Rechenaufgaben'} 
-                    {' '}({selectedQuestions.length} {questionConfig.questionType === 'multiple-choice' ? 'zufällige' : ''} Fragen)
+                    Quiz ({selectedQuestions.length} zufällige Fragen)
                   </CardTitle>
                   <div className="text-sm text-gray-600">
                     {correctAnswers.size} / {selectedQuestions.length} richtig
@@ -350,15 +366,15 @@ export default function LernzielDetailPage() {
               <CardContent>
                 {currentQuestion && (
                   <>
-                    {questionConfig.questionType === 'multiple-choice' ? (
-                      <MultipleChoiceBio
+                    {isMathQuestion(currentQuestion) ? (
+                      <MathInputAdvanced
                         question={currentQuestion}
                         onComplete={handleAnswerComplete}
                         questionNumber={currentQuestionIndex + 1}
                         totalQuestions={selectedQuestions.length}
                       />
                     ) : (
-                      <MathInputAdvanced
+                      <MultipleChoiceBio
                         question={currentQuestion}
                         onComplete={handleAnswerComplete}
                         questionNumber={currentQuestionIndex + 1}
@@ -436,7 +452,19 @@ export default function LernzielDetailPage() {
         )}
 
         <div className="flex justify-between mt-8">
-          <Link href="/explore"><Button variant="outline">Alle Lernziele</Button></Link>
+          <Button
+            variant="outline"
+            onClick={() => {
+              if (lernziel?.fach) {
+                sessionStorage.setItem('explore_selected_modul', JSON.stringify(lernziel.fach));
+                sessionStorage.setItem('explore_active_tab', 'quiz');
+                sessionStorage.setItem('explore_expand_semester', lernziel.klasse.toString());
+              }
+              router.push('/explore');
+            }}
+          >
+            Alle Lernziele
+          </Button>
         </div>
       </div>
     </main>

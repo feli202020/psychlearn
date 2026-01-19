@@ -57,18 +57,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   async function loadProfile(userId: string) {
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('id', userId)
+        .single();
 
-    if (error) {
-      console.error('Fehler beim Laden des Profils:', error);
-    } else {
-      setProfile(data);
+      if (error) {
+        // Nur loggen wenn es kein "not found" Fehler ist (z.B. beim Logout)
+        if (error.code !== 'PGRST116') {
+          console.error('Fehler beim Laden des Profils:', error);
+        }
+        setProfile(null);
+      } else {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error('Unerwarteter Fehler beim Laden des Profils:', err);
+      setProfile(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   async function refreshProfile() {
@@ -145,10 +155,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signOut() {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
-    // Lösche rememberMe Präferenz
-    localStorage.removeItem('rememberMe');
+    try {
+      // Zuerst Profile und User State clearen
+      setProfile(null);
+      setUser(null);
+
+      // Dann Logout durchführen
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+
+      // Lösche rememberMe Präferenz
+      localStorage.removeItem('rememberMe');
+    } catch (err) {
+      console.error('Fehler beim Logout:', err);
+      throw err;
+    }
   }
 
   return (

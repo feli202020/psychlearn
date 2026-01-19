@@ -282,9 +282,9 @@ function DailyQuizContent() {
   };
 
   const isMathQuestion = (question: Question): boolean => {
-    return question.module_id === '00000000-0000-0000-0000-000000000101' ||
-           question.module_id === '00000000-0000-0000-0000-000000000106' ||
-           question.answer !== null;
+    // Eine Frage ist eine Math-Input-Frage, wenn das answer-Feld gefüllt ist
+    // Dies gilt für alle Module, einschließlich Quantitative Methoden I & II
+    return question.answer !== null;
   };
 
   const handleAnswerSelect = (index: number) => {

@@ -158,6 +158,13 @@ export default function MathInputAdvanced({
         {/* Frage */}
         <div className="text-lg font-medium mb-4">{question.question_text}</div>
 
+        {/* Hinweis bei Mathe-Fragen */}
+        {!submitted && (
+          <div className="text-xs text-gray-500 italic mb-3">
+            Hinweis: Verwende Punkt statt Komma (z.B. 1.0 statt 1,0)
+          </div>
+        )}
+
         {/* Tipp-Button (nur VOR dem Absenden) */}
         {!submitted && question.hint && (
           <div>

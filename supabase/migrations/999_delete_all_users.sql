@@ -2,10 +2,29 @@
 -- Nur ausführen, wenn Sie wirklich alle Accounts löschen möchten
 
 -- 1. Alle User-bezogenen Daten löschen
-DELETE FROM public.user_achievements;
-DELETE FROM public.user_lernziel_fortschritt;
-DELETE FROM public.user_aufgaben_fortschritt;
-DELETE FROM public.user_profiles;
+DO $$ BEGIN
+  DELETE FROM public.user_achievements;
+EXCEPTION WHEN undefined_table THEN
+  NULL;
+END $$;
+
+DO $$ BEGIN
+  DELETE FROM public.user_lernziel_fortschritt;
+EXCEPTION WHEN undefined_table THEN
+  NULL;
+END $$;
+
+DO $$ BEGIN
+  DELETE FROM public.user_aufgaben_fortschritt;
+EXCEPTION WHEN undefined_table THEN
+  NULL;
+END $$;
+
+DO $$ BEGIN
+  DELETE FROM public.user_profiles;
+EXCEPTION WHEN undefined_table THEN
+  NULL;
+END $$;
 
 -- 2. Alle Auth-User löschen
 -- HINWEIS: Dies muss über die Supabase Admin API erfolgen

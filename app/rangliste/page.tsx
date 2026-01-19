@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Trophy, Loader2, ArrowLeft, Calendar } from 'lucide-react';
 import Link from 'next/link';
+import { supabase } from '@/lib/supabase';
 
 interface LeaderboardEntry {
   rank: number;
@@ -45,7 +46,14 @@ export default function RanglistePage() {
 
   const loadAvailableDates = async () => {
     try {
-      const response = await fetch('/api/daily-quiz/leaderboard/dates');
+      // Hole Auth-Token für authentifizierte Anfrage
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch('/api/daily-quiz/leaderboard/dates', { headers });
       if (response.ok) {
         const data = await response.json();
         setAvailableDates(data.dates || []);
@@ -64,7 +72,14 @@ export default function RanglistePage() {
   const loadLeaderboard = async (date: string) => {
     setLoading(true);
     try {
-      const response = await fetch(`/api/daily-quiz/leaderboard/all?date=${date}`);
+      // Hole Auth-Token für authentifizierte Anfrage
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = {};
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
+      const response = await fetch(`/api/daily-quiz/leaderboard/all?date=${date}`, { headers });
       if (response.ok) {
         const data = await response.json();
         setLeaderboard(data.leaderboard || []);

@@ -9,9 +9,10 @@ import { Modul } from '@/lib/types';
 interface ExploreSidebarProps {
   selectedModul: Modul | null;
   onSelectModul: (modul: Modul) => void;
+  expandSemester?: number | null;
 }
 
-export default function ExploreSidebar({ selectedModul, onSelectModul }: ExploreSidebarProps) {
+export default function ExploreSidebar({ selectedModul, onSelectModul, expandSemester }: ExploreSidebarProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [moduleNachSemester, setModuleNachSemester] = useState<Record<number, Modul[]>>({});
   const [expandedSemesters, setExpandedSemesters] = useState<Set<number>>(new Set());
@@ -33,6 +34,17 @@ export default function ExploreSidebar({ selectedModul, onSelectModul }: Explore
     }
     loadModule();
   }, []);
+
+  // Semester automatisch öffnen wenn expandSemester gesetzt ist
+  useEffect(() => {
+    if (expandSemester !== null && expandSemester !== undefined) {
+      setExpandedSemesters(prev => {
+        const next = new Set(prev);
+        next.add(expandSemester);
+        return next;
+      });
+    }
+  }, [expandSemester]);
 
   const toggleSemester = (semester: number) => {
     setExpandedSemesters(prev => {

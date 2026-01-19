@@ -56,6 +56,13 @@ export default function MathInput({ aufgabe, onComplete }: MathInputProps) {
         
         <div className="text-lg font-medium mb-4">{aufgabe.frage}</div>
 
+        {/* Hinweis bei Mathe-Fragen */}
+        {!submitted && (
+          <div className="text-xs text-gray-500 italic mb-3">
+            Hinweis: Verwende Punkt statt Komma (z.B. 1.0 statt 1,0)
+          </div>
+        )}
+
         <div className="flex gap-2">
           <input
             type="number"

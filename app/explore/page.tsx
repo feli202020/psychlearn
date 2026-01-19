@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
-import { getLernziele } from '@/lib/database';
+import { getLernziele, getFaecher } from '@/lib/database';
 import { Modul, Lernziel } from '@/lib/types';
 import { getLerninhalteByModulId, LerninhaltItem } from '@/content/lerninhalte';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,6 +21,37 @@ export default function ExplorePage() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'inhalt' | 'quiz'>('inhalt');
   const [quizTabExpanded, setQuizTabExpanded] = useState(true);
+  const [expandSemester, setExpandSemester] = useState<number | null>(null);
+
+  // SessionStorage beim ersten Laden auslesen
+  useEffect(() => {
+    // Nur im Browser ausführen
+    if (typeof window === 'undefined') return;
+
+    const savedModul = sessionStorage.getItem('explore_selected_modul');
+    const savedTab = sessionStorage.getItem('explore_active_tab');
+    const savedSemester = sessionStorage.getItem('explore_expand_semester');
+
+    if (savedModul) {
+      try {
+        const modul = JSON.parse(savedModul);
+        setSelectedModul(modul);
+        sessionStorage.removeItem('explore_selected_modul'); // Cleanup
+      } catch (e) {
+        console.error('Error parsing saved modul:', e);
+      }
+    }
+
+    if (savedTab === 'quiz') {
+      setActiveTab('quiz');
+      sessionStorage.removeItem('explore_active_tab'); // Cleanup
+    }
+
+    if (savedSemester) {
+      setExpandSemester(parseInt(savedSemester));
+      sessionStorage.removeItem('explore_expand_semester'); // Cleanup
+    }
+  }, []);
 
   // Lerninhalte und Lernziele laden wenn Modul ausgewählt
   useEffect(() => {
@@ -53,6 +84,7 @@ export default function ExplorePage() {
         <ExploreSidebar
           selectedModul={selectedModul}
           onSelectModul={setSelectedModul}
+          expandSemester={expandSemester}
         />
 
         {/* Main Content */}
