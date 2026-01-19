@@ -83,6 +83,9 @@ const MATH_SYMBOLS = {
   ],
 };
 
+// Disable static generation for this page
+export const dynamic = 'force-dynamic';
+
 function DailyQuizContent() {
   const { user } = useAuth();
   const router = useRouter();
