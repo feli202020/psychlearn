@@ -65,15 +65,34 @@ export async function GET(request: Request) {
       }, { status: 500 });
     }
 
-    // Hole Benutzernamen separat für alle User IDs
-    let leaderboard = [];
+    // Hole Benutzernamen und Anonymisierungs-Status separat für alle User IDs
+    let leaderboard: Array<{
+      rank: number;
+      username: string;
+      score: number;
+      totalPoints: number;
+      totalQuestions: number;
+      percentage: number;
+      quiz_date: string;
+      isAnonymous: boolean;
+      userId: string;
+    }> = [];
+    let statistics: {
+      totalParticipants: number;
+      avgScore: number;
+      avgPoints: number;
+      avgPercentage: number;
+      totalQuestions: number;
+      difficultyLevel: 'easy' | 'medium' | 'hard';
+      difficultyMessage: string;
+    } | null = null;
 
     if (results && results.length > 0) {
       const userIds = results.map(r => r.user_id);
 
       const { data: profiles, error: profilesError } = await supabase
         .from('user_profiles')
-        .select('id, username')
+        .select('id, username, anonymous_in_leaderboard')
         .in('id', userIds);
 
       console.log('[Leaderboard API] User Profiles:', {
@@ -82,24 +101,62 @@ export async function GET(request: Request) {
         profiles
       });
 
-      // Erstelle Rangliste mit Rang-Berechnung
+      // Berechne Statistiken
+      const totalParticipants = results.length;
+      const totalScoreSum = results.reduce((sum: number, r: any) => sum + r.score, 0);
+      const totalPointsSum = results.reduce((sum: number, r: any) => sum + r.total_points, 0);
+
+      const avgScore = totalParticipants > 0 ? totalScoreSum / totalParticipants : 0;
+      const avgPoints = totalParticipants > 0 ? totalPointsSum / totalParticipants : 0;
+      const avgPercentage = totalParticipants > 0 ? Math.round((avgScore / totalQuestions) * 100) : 0;
+
+      // Bestimme Quiz-Schwierigkeit basierend auf Durchschnitt
+      let difficultyLevel: 'easy' | 'medium' | 'hard';
+      let difficultyMessage: string;
+
+      if (avgPercentage >= 80) {
+        difficultyLevel = 'easy';
+        difficultyMessage = 'Super! Heute war ein gut meisterbares Quiz - die Community hat stark abgeschnitten!';
+      } else if (avgPercentage >= 70) {
+        difficultyLevel = 'medium';
+        difficultyMessage = 'Solides Quiz heute! Die Fragen waren fair und ausgewogen.';
+      } else {
+        difficultyLevel = 'hard';
+        difficultyMessage = 'Heute war das Quiz eine echte Herausforderung - jeder Punkt zahlt sich aus!';
+      }
+
+      statistics = {
+        totalParticipants,
+        avgScore: Math.round(avgScore * 10) / 10,
+        avgPoints: Math.round(avgPoints * 10) / 10,
+        avgPercentage,
+        totalQuestions,
+        difficultyLevel,
+        difficultyMessage
+      };
+
+      // Erstelle Rangliste mit Rang-Berechnung (respektiere Anonymisierung)
       leaderboard = results.map((result: any, index: number) => {
         const userProfile = profiles?.find(p => p.id === result.user_id);
         return {
           rank: index + 1,
-          username: userProfile?.username || 'Unbekannt',
+          username: userProfile?.anonymous_in_leaderboard
+            ? 'Anonymer Teilnehmer'
+            : (userProfile?.username || 'Unbekannt'),
           score: result.score,
           totalPoints: result.total_points,
           totalQuestions,
           percentage: Math.round((result.score / totalQuestions) * 100),
-          quiz_date: date
+          quiz_date: date,
+          isAnonymous: userProfile?.anonymous_in_leaderboard || false,
+          userId: result.user_id
         };
       });
     }
 
     console.log('[Leaderboard API] Finale Rangliste:', leaderboard);
 
-    return NextResponse.json({ leaderboard });
+    return NextResponse.json({ leaderboard, statistics });
   } catch (error) {
     console.error('Server-Fehler:', error);
     return NextResponse.json({ error: 'Interner Server-Fehler' }, { status: 500 });

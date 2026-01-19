@@ -20,7 +20,10 @@ import {
   Eye,
   EyeOff,
   Lightbulb,
-  BookOpen
+  BookOpen,
+  Users,
+  TrendingUp,
+  BarChart3
 } from 'lucide-react';
 import { Question } from '@/lib/types';
 import { supabase } from '@/lib/supabase';
@@ -108,11 +111,20 @@ function DailyQuizContent() {
   const [canTakeQuiz, setCanTakeQuiz] = useState(true);
   const [uniqueLernziele, setUniqueLernziele] = useState<Array<{id: string, slug: string, titel: string, fach?: {name: string}}>>([]);
   const [partialAnswerInfo, setPartialAnswerInfo] = useState<{correctCount: number, totalCount: number} | null>(null);
-  const [leaderboard, setLeaderboard] = useState<Array<{rank: number, username: string, score: number, totalPoints: number}>>([]);
+  const [leaderboard, setLeaderboard] = useState<Array<{rank: number, username: string, score: number, totalPoints: number, isAnonymous?: boolean, userId?: string}>>([]);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
   const [quizDate, setQuizDate] = useState<string>(''); // Speichert das Quiz-Datum für diese Session
   const [userResult, setUserResult] = useState<{score: number, totalPoints: number, totalQuestions: number} | null>(null);
   const [blurredResult, setBlurredResult] = useState(true); // State für Blur-Effekt beim ersten Mal
+  const [statistics, setStatistics] = useState<{
+    totalParticipants: number;
+    avgScore: number;
+    avgPoints: number;
+    avgPercentage: number;
+    totalQuestions: number;
+    difficultyLevel: 'easy' | 'medium' | 'hard';
+    difficultyMessage: string;
+  } | null>(null);
 
   useEffect(() => {
     // Warte bis Auth geladen ist, bevor wir zum Login weiterleiten
@@ -401,6 +413,7 @@ function DailyQuizContent() {
       if (response.ok) {
         const data = await response.json();
         setLeaderboard(data.leaderboard || []);
+        setStatistics(data.statistics || null);
       }
     } catch (error) {
       console.error('Fehler beim Laden der Rangliste:', error);
@@ -617,6 +630,54 @@ function DailyQuizContent() {
                 </div>
               )}
 
+              {/* Statistiken Section */}
+              {statistics && (
+                <div className={`border-2 rounded-lg p-4 ${
+                  statistics.difficultyLevel === 'easy'
+                    ? 'border-green-200 bg-green-50'
+                    : statistics.difficultyLevel === 'medium'
+                    ? 'border-yellow-200 bg-yellow-50'
+                    : 'border-orange-200 bg-orange-50'
+                }`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <BarChart3 className={`w-5 h-5 ${
+                      statistics.difficultyLevel === 'easy'
+                        ? 'text-green-600'
+                        : statistics.difficultyLevel === 'medium'
+                        ? 'text-yellow-600'
+                        : 'text-orange-600'
+                    }`} />
+                    <h3 className="font-semibold text-gray-800">Quiz-Statistiken</h3>
+                  </div>
+                  <p className={`text-sm mb-4 ${
+                    statistics.difficultyLevel === 'easy'
+                      ? 'text-green-800'
+                      : statistics.difficultyLevel === 'medium'
+                      ? 'text-yellow-800'
+                      : 'text-orange-800'
+                  }`}>
+                    {statistics.difficultyMessage}
+                  </p>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <Users className="w-4 h-4 mx-auto mb-1 text-gray-500" />
+                      <p className="text-xl font-bold text-gray-800">{statistics.totalParticipants}</p>
+                      <p className="text-xs text-gray-600">Teilnehmer</p>
+                    </div>
+                    <div>
+                      <TrendingUp className="w-4 h-4 mx-auto mb-1 text-gray-500" />
+                      <p className="text-xl font-bold text-gray-800">{statistics.avgPercentage}%</p>
+                      <p className="text-xs text-gray-600">Durchschnitt</p>
+                    </div>
+                    <div>
+                      <Trophy className="w-4 h-4 mx-auto mb-1 text-gray-500" />
+                      <p className="text-xl font-bold text-gray-800">{statistics.avgPoints}</p>
+                      <p className="text-xs text-gray-600">Punkte</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Leaderboard Section */}
               {leaderboard.length > 0 && (
                 <div className="bg-white border-2 border-border rounded-lg p-4">
@@ -637,7 +698,7 @@ function DailyQuizContent() {
                   {showLeaderboard && (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                       {leaderboard.map((entry, index) => {
-                        const isCurrentUser = user && entry.username === user.email?.split('@')[0];
+                        const isCurrentUser = user && (entry.userId === user.id);
                         return (
                           <div
                             key={index}
@@ -657,9 +718,23 @@ function DailyQuizContent() {
                                  entry.rank === 3 ? '🥉' :
                                  `#${entry.rank}`}
                               </span>
-                              <span className={`text-sm ${isCurrentUser ? 'font-semibold text-primary' : 'text-gray-700'}`}>
-                                {entry.username}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                {entry.isAnonymous && !isCurrentUser && (
+                                  <EyeOff className="w-3 h-3 text-gray-400" />
+                                )}
+                                <span className={`text-sm ${
+                                  isCurrentUser ? 'font-semibold text-primary' :
+                                  entry.isAnonymous ? 'text-gray-500 italic' : 'text-gray-700'
+                                }`}>
+                                  {entry.username}
+                                  {isCurrentUser && entry.isAnonymous && (
+                                    <span className="ml-1 text-xs text-gray-400 font-normal">(du, anonym)</span>
+                                  )}
+                                  {isCurrentUser && !entry.isAnonymous && (
+                                    <span className="ml-1 text-xs text-primary font-normal">(du)</span>
+                                  )}
+                                </span>
+                              </div>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-gray-600">
                               <span>{entry.totalPoints} Punkte</span>
@@ -794,6 +869,54 @@ function DailyQuizContent() {
                 )}
               </div>
 
+              {/* Statistiken Section */}
+              {statistics && (
+                <div className={`border-2 rounded-lg p-4 ${
+                  statistics.difficultyLevel === 'easy'
+                    ? 'border-green-200 bg-green-50'
+                    : statistics.difficultyLevel === 'medium'
+                    ? 'border-yellow-200 bg-yellow-50'
+                    : 'border-orange-200 bg-orange-50'
+                }`}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <BarChart3 className={`w-5 h-5 ${
+                      statistics.difficultyLevel === 'easy'
+                        ? 'text-green-600'
+                        : statistics.difficultyLevel === 'medium'
+                        ? 'text-yellow-600'
+                        : 'text-orange-600'
+                    }`} />
+                    <h3 className="font-semibold text-gray-800">Quiz-Statistiken</h3>
+                  </div>
+                  <p className={`text-sm mb-4 ${
+                    statistics.difficultyLevel === 'easy'
+                      ? 'text-green-800'
+                      : statistics.difficultyLevel === 'medium'
+                      ? 'text-yellow-800'
+                      : 'text-orange-800'
+                  }`}>
+                    {statistics.difficultyMessage}
+                  </p>
+                  <div className="grid grid-cols-3 gap-4 text-center">
+                    <div>
+                      <Users className="w-4 h-4 mx-auto mb-1 text-gray-500" />
+                      <p className="text-xl font-bold text-gray-800">{statistics.totalParticipants}</p>
+                      <p className="text-xs text-gray-600">Teilnehmer</p>
+                    </div>
+                    <div>
+                      <TrendingUp className="w-4 h-4 mx-auto mb-1 text-gray-500" />
+                      <p className="text-xl font-bold text-gray-800">{statistics.avgPercentage}%</p>
+                      <p className="text-xs text-gray-600">Durchschnitt</p>
+                    </div>
+                    <div>
+                      <Trophy className="w-4 h-4 mx-auto mb-1 text-gray-500" />
+                      <p className="text-xl font-bold text-gray-800">{statistics.avgPoints}</p>
+                      <p className="text-xs text-gray-600">Punkte</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Leaderboard Section */}
               {leaderboard.length > 0 && (
                 <div className="bg-white border-2 border-border rounded-lg p-4">
@@ -814,7 +937,7 @@ function DailyQuizContent() {
                   {showLeaderboard && (
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                       {leaderboard.map((entry, index) => {
-                        const isCurrentUser = user && entry.username === user.email?.split('@')[0];
+                        const isCurrentUser = user && (entry.userId === user.id);
                         return (
                           <div
                             key={index}
@@ -834,9 +957,23 @@ function DailyQuizContent() {
                                  entry.rank === 3 ? '🥉' :
                                  `#${entry.rank}`}
                               </span>
-                              <span className={`text-sm ${isCurrentUser ? 'font-semibold text-primary' : 'text-gray-700'}`}>
-                                {entry.username}
-                              </span>
+                              <div className="flex items-center gap-1">
+                                {entry.isAnonymous && !isCurrentUser && (
+                                  <EyeOff className="w-3 h-3 text-gray-400" />
+                                )}
+                                <span className={`text-sm ${
+                                  isCurrentUser ? 'font-semibold text-primary' :
+                                  entry.isAnonymous ? 'text-gray-500 italic' : 'text-gray-700'
+                                }`}>
+                                  {entry.username}
+                                  {isCurrentUser && entry.isAnonymous && (
+                                    <span className="ml-1 text-xs text-gray-400 font-normal">(du, anonym)</span>
+                                  )}
+                                  {isCurrentUser && !entry.isAnonymous && (
+                                    <span className="ml-1 text-xs text-primary font-normal">(du)</span>
+                                  )}
+                                </span>
+                              </div>
                             </div>
                             <div className="flex items-center gap-3 text-sm text-gray-600">
                               <span>{entry.totalPoints} Punkte</span>

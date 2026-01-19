@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trophy, Loader2, ArrowLeft, Calendar } from 'lucide-react';
+import { Trophy, Loader2, ArrowLeft, Calendar, Users, TrendingUp, EyeOff, Eye, BarChart3 } from 'lucide-react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
 
@@ -17,6 +17,18 @@ interface LeaderboardEntry {
   totalQuestions: number;
   percentage: number;
   quiz_date: string;
+  isAnonymous?: boolean;
+  userId?: string;
+}
+
+interface Statistics {
+  totalParticipants: number;
+  avgScore: number;
+  avgPoints: number;
+  avgPercentage: number;
+  totalQuestions: number;
+  difficultyLevel: 'easy' | 'medium' | 'hard';
+  difficultyMessage: string;
 }
 
 export default function RanglistePage() {
@@ -26,6 +38,9 @@ export default function RanglistePage() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [availableDates, setAvailableDates] = useState<string[]>([]);
+  const [statistics, setStatistics] = useState<Statistics | null>(null);
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [savingAnonymity, setSavingAnonymity] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -36,7 +51,53 @@ export default function RanglistePage() {
     }
 
     loadAvailableDates();
+    loadAnonymityStatus();
   }, [user, authLoading, router]);
+
+  const loadAnonymityStatus = async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('user_profiles')
+        .select('anonymous_in_leaderboard')
+        .eq('id', user.id)
+        .single();
+
+      if (!error && data) {
+        setIsAnonymous(data.anonymous_in_leaderboard || false);
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden des Anonymitaets-Status:', error);
+    }
+  };
+
+  const toggleAnonymity = async () => {
+    if (!user || savingAnonymity) return;
+
+    setSavingAnonymity(true);
+    try {
+      const newStatus = !isAnonymous;
+
+      const { error } = await supabase
+        .from('user_profiles')
+        .update({ anonymous_in_leaderboard: newStatus })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      setIsAnonymous(newStatus);
+
+      // Lade Rangliste neu um die Aenderung zu sehen
+      if (selectedDate) {
+        loadLeaderboard(selectedDate);
+      }
+    } catch (error) {
+      console.error('Fehler beim Aktualisieren der Anonymitaet:', error);
+    } finally {
+      setSavingAnonymity(false);
+    }
+  };
 
   useEffect(() => {
     if (selectedDate) {
@@ -83,6 +144,7 @@ export default function RanglistePage() {
       if (response.ok) {
         const data = await response.json();
         setLeaderboard(data.leaderboard || []);
+        setStatistics(data.statistics || null);
       }
     } catch (error) {
       console.error('Fehler beim Laden der Rangliste:', error);
@@ -134,6 +196,51 @@ export default function RanglistePage() {
           </p>
         </div>
 
+        {/* Anonymitaets-Toggle */}
+        <Card className="mb-6 border-2 border-primary/20 bg-primary/5">
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                {isAnonymous ? (
+                  <EyeOff className="w-5 h-5 text-primary" />
+                ) : (
+                  <Eye className="w-5 h-5 text-gray-500" />
+                )}
+                <div>
+                  <p className="font-medium text-gray-800">
+                    {isAnonymous ? 'Du bist anonym' : 'Dein Name ist sichtbar'}
+                  </p>
+                  <p className="text-sm text-gray-600">
+                    {isAnonymous
+                      ? 'Andere sehen dich als "Anonymer Teilnehmer"'
+                      : 'Andere Teilnehmer sehen deinen Benutzernamen'}
+                  </p>
+                </div>
+              </div>
+              <Button
+                variant={isAnonymous ? 'default' : 'outline'}
+                size="sm"
+                onClick={toggleAnonymity}
+                disabled={savingAnonymity}
+              >
+                {savingAnonymity ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : isAnonymous ? (
+                  <>
+                    <Eye className="w-4 h-4 mr-2" />
+                    Sichtbar machen
+                  </>
+                ) : (
+                  <>
+                    <EyeOff className="w-4 h-4 mr-2" />
+                    Anonymisieren
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Datum Auswahl */}
         {availableDates.length > 0 && (
           <Card className="mb-6">
@@ -159,6 +266,64 @@ export default function RanglistePage() {
           </Card>
         )}
 
+        {/* Statistiken */}
+        {statistics && (
+          <Card className={`mb-6 border-2 ${
+            statistics.difficultyLevel === 'easy'
+              ? 'border-green-200 bg-green-50'
+              : statistics.difficultyLevel === 'medium'
+              ? 'border-yellow-200 bg-yellow-50'
+              : 'border-orange-200 bg-orange-50'
+          }`}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BarChart3 className={`w-5 h-5 ${
+                  statistics.difficultyLevel === 'easy'
+                    ? 'text-green-600'
+                    : statistics.difficultyLevel === 'medium'
+                    ? 'text-yellow-600'
+                    : 'text-orange-600'
+                }`} />
+                Quiz-Statistiken
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className={`text-sm mb-4 ${
+                statistics.difficultyLevel === 'easy'
+                  ? 'text-green-800'
+                  : statistics.difficultyLevel === 'medium'
+                  ? 'text-yellow-800'
+                  : 'text-orange-800'
+              }`}>
+                {statistics.difficultyMessage}
+              </p>
+              <div className="grid grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Users className="w-4 h-4 text-gray-500" />
+                  </div>
+                  <p className="text-2xl font-bold text-gray-800">{statistics.totalParticipants}</p>
+                  <p className="text-xs text-gray-600">Teilnehmer</p>
+                </div>
+                <div>
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <TrendingUp className="w-4 h-4 text-gray-500" />
+                  </div>
+                  <p className="text-2xl font-bold text-gray-800">{statistics.avgPercentage}%</p>
+                  <p className="text-xs text-gray-600">Durchschnitt</p>
+                </div>
+                <div>
+                  <div className="flex items-center justify-center gap-1 mb-1">
+                    <Trophy className="w-4 h-4 text-gray-500" />
+                  </div>
+                  <p className="text-2xl font-bold text-gray-800">{statistics.avgPoints}</p>
+                  <p className="text-xs text-gray-600">Punkte</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Rangliste */}
         <Card className="border-2 border-border">
           <CardHeader>
@@ -180,7 +345,7 @@ export default function RanglistePage() {
             ) : (
               <div className="space-y-2">
                 {leaderboard.map((entry, index) => {
-                  const isCurrentUser = profile && entry.username === profile.username;
+                  const isCurrentUser = profile && (entry.userId === user?.id || (!entry.isAnonymous && entry.username === profile.username));
                   return (
                     <div
                       key={index}
@@ -204,13 +369,23 @@ export default function RanglistePage() {
                         >
                           {entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : `#${entry.rank}`}
                         </span>
-                        <div>
+                        <div className="flex items-center gap-2">
+                          {entry.isAnonymous && !isCurrentUser && (
+                            <EyeOff className="w-4 h-4 text-gray-400" />
+                          )}
                           <span
                             className={`font-semibold ${
-                              isCurrentUser ? 'text-primary' : 'text-gray-800'
+                              isCurrentUser ? 'text-primary' : entry.isAnonymous ? 'text-gray-500 italic' : 'text-gray-800'
                             }`}
                           >
-                            {entry.username}
+                            {isCurrentUser && entry.isAnonymous ? (
+                              <>
+                                {profile?.username || 'Du'}
+                                <span className="ml-1 text-xs text-gray-500 font-normal">(anonym)</span>
+                              </>
+                            ) : (
+                              entry.username
+                            )}
                             {isCurrentUser && (
                               <span className="ml-2 text-xs bg-primary text-white px-2 py-1 rounded">
                                 Du
@@ -246,8 +421,9 @@ export default function RanglistePage() {
         <Card className="mt-6 bg-blue-50 border-blue-200">
           <CardContent className="p-4">
             <p className="text-sm text-blue-800">
-              <strong>Hinweis:</strong> Die Rangliste zeigt die Ergebnisse aller Teilnehmer mit ihrem Benutzernamen,
-              der Anzahl der Punkte und dem prozentualen Ergebnis vom Daily Quiz.
+              <strong>Hinweis:</strong> Du kannst deinen Namen in der Rangliste anonymisieren, indem du oben auf
+              &quot;Anonymisieren&quot; klickst. Dein Ergebnis wird weiterhin angezeigt, aber andere sehen nur
+              &quot;Anonymer Teilnehmer&quot; statt deines Namens.
             </p>
           </CardContent>
         </Card>
