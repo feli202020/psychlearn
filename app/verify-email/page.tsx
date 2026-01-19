@@ -133,12 +133,18 @@ function VerifyEmailContent() {
             </div>
             <div className="flex items-start gap-2">
               <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-              <p>Überprüfe auch deinen Spam-Ordner, falls du keine E-Mail erhalten hast</p>
-            </div>
-            <div className="flex items-start gap-2">
-              <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
               <p>Nach der Bestätigung kannst du dich direkt anmelden</p>
             </div>
+          </div>
+
+          <div className="bg-amber-50 border-2 border-amber-200 rounded-lg p-4">
+            <p className="text-sm text-amber-800 font-medium mb-2">
+              Keine E-Mail erhalten?
+            </p>
+            <p className="text-sm text-amber-700">
+              Bitte überprüfe auch deinen <strong>Spam-</strong>, <strong>Junk-</strong> oder <strong>Werbung-Ordner</strong>.
+              Manchmal landen Bestätigungs-E-Mails dort. Es kann auch einige Minuten dauern, bis die E-Mail ankommt.
+            </p>
           </div>
 
           {error && (

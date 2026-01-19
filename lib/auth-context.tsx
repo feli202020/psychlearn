@@ -89,6 +89,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   async function signUp(email: string, password: string, username: string, semester?: number) {
     // User registrieren - Profil wird automatisch durch Database Trigger erstellt
+    const siteUrl = typeof window !== 'undefined'
+      ? window.location.origin
+      : process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -96,11 +100,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         data: {
           username: username,
           current_semester: semester || 1,
-        }
+        },
+        emailRedirectTo: `${siteUrl}/verify-email`,
       }
     });
 
     if (error) throw error;
+
+    // Profil direkt nach Registrierung mit Username aktualisieren
+    // (Falls der DB-Trigger die Metadaten nicht korrekt lesen kann)
+    if (data.user) {
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: data.user.id,
+          username: username,
+          email: email,
+          display_name: username,
+          current_semester: semester || 1,
+          xp: 0,
+          level: 1,
+          anonymous_in_leaderboard: false,
+        }, {
+          onConflict: 'id'
+        });
+
+      if (profileError) {
+        console.error('Fehler beim Erstellen des Profils:', profileError);
+      }
+    }
 
     return data;
   }
@@ -125,13 +153,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Login mit E-Mail
-    // Wenn rememberMe aktiviert ist, setze Session auf 30 Tage, sonst Browser-Session
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-      options: {
-        persistSession: true,
-      }
     });
 
     if (error) throw error;

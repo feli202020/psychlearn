@@ -464,7 +464,7 @@ function DailyQuizContent() {
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ error: 'Unbekannter Fehler' }));
         console.error('Server-Fehler:', response.status, errorData);
-        throw new Error(`Fehler beim Speichern: ${errorData.error || response.statusText}`);
+        throw new Error(errorData.error || response.statusText);
       }
 
       const data = await response.json();

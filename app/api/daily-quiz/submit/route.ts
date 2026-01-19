@@ -103,9 +103,34 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      console.error('Fehler beim Speichern des Quiz-Ergebnisses:', error);
+      console.error('Fehler beim Speichern des Quiz-Ergebnisses:', {
+        error,
+        code: error.code,
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        userId,
+        sessionId
+      });
+
+      // Spezifische Fehlermeldungen basierend auf Fehlercode
+      if (error.code === '23503') {
+        // Foreign key violation - User-Profil fehlt
+        return NextResponse.json(
+          { error: 'Benutzerprofil nicht gefunden. Bitte lade die Seite neu.' },
+          { status: 400 }
+        );
+      }
+      if (error.code === '23505') {
+        // Unique constraint violation - bereits gespeichert
+        return NextResponse.json(
+          { error: 'Quiz bereits abgeschlossen' },
+          { status: 409 }
+        );
+      }
+
       return NextResponse.json(
-        { error: 'Fehler beim Speichern' },
+        { error: `Datenbankfehler: ${error.message}` },
         { status: 500 }
       );
     }
