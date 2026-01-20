@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams, useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { getLernzielBySlug, getVoraussetzungen } from '@/lib/database';
 import { completeLernziel, getLernzielFortschritt } from '@/lib/gamification';
@@ -89,11 +89,17 @@ export default function LernzielDetailPage() {
   const [answeredQuestions, setAnsweredQuestions] = useState<Set<number>>(new Set());
   const [correctAnswers, setCorrectAnswers] = useState<Set<number>>(new Set());
   const [totalPoints, setTotalPoints] = useState(0);
+  // Speichere Antworten für jede Frage, um State beim Wechseln zu bewahren
+  const [questionAnswers, setQuestionAnswers] = useState<Map<number, any>>(new Map());
   const [loading, setLoading] = useState(true);
   const [completing, setCompleting] = useState(false);
   const [fortschritt, setFortschritt] = useState<any>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [questionConfig, setQuestionConfig] = useState({ questionsToShow: 10 });
+
+  // Ref um zu tracken ob Daten bereits geladen wurden
+  const dataLoadedRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Prüfe, ob User eingeloggt ist
@@ -102,12 +108,18 @@ export default function LernzielDetailPage() {
       return;
     }
 
+    // Verhindere erneutes Laden wenn sich nur die user-Referenz ändert (Tab-Wechsel)
+    // aber nicht die tatsächliche User-ID
+    if (dataLoadedRef.current && userIdRef.current === user.id) {
+      return;
+    }
+
     async function loadData() {
       setLoading(true);
 
       const lz = await getLernzielBySlug(slug);
       setLernziel(lz);
-      
+
       if (lz) {
         // Konfiguration für dieses Modul laden
         const config = MODULE_CONFIG[lz.fach.id] || {
@@ -135,18 +147,18 @@ export default function LernzielDetailPage() {
           .from('questions')
           .select('*')
           .eq('lernziel_id', lz.id);
-        
+
         if (error) {
           console.error('Fehler beim Laden der Fragen:', error);
         } else if (data && data.length > 0) {
           // Parse JSON-Felder
           const parsed = data.map((q: any) => {
             const parsedQuestion: any = { ...q };
-            
+
             // Parse options und correct_indices (für Multiple Choice)
             if (q.options) {
-              parsedQuestion.options = typeof q.options === 'string' 
-                ? JSON.parse(q.options) 
+              parsedQuestion.options = typeof q.options === 'string'
+                ? JSON.parse(q.options)
                 : q.options;
             }
             if (q.correct_indices) {
@@ -154,12 +166,12 @@ export default function LernzielDetailPage() {
                 ? JSON.parse(q.correct_indices)
                 : q.correct_indices;
             }
-            
+
             return parsedQuestion;
           });
-          
+
           setAllQuestions(parsed);
-          
+
           // Wähle N zufällige Fragen basierend auf Modul-Konfiguration
           const initialSelection = selectRandomQuestions(parsed, config.questionsToShow);
 
@@ -171,16 +183,18 @@ export default function LernzielDetailPage() {
           setSelectedQuestions(processedQuestions);
         }
       }
-      
+
       setLoading(false);
+      dataLoadedRef.current = true;
+      userIdRef.current = user.id;
     }
 
     if (slug) {
       loadData();
     }
-  }, [slug, user]);
+  }, [slug, user, router]);
 
-  const handleAnswerComplete = (isCorrect: boolean, points?: number) => {
+  const handleAnswerComplete = (isCorrect: boolean, points?: number, answerData?: any) => {
     setAnsweredQuestions(prev => new Set(prev).add(currentQuestionIndex));
     if (isCorrect) {
       setCorrectAnswers(prev => new Set(prev).add(currentQuestionIndex));
@@ -188,6 +202,10 @@ export default function LernzielDetailPage() {
     // Wenn Punkte übergeben wurden, addiere sie zum Gesamtscore
     if (points !== undefined && points > 0) {
       setTotalPoints(prev => prev + points);
+    }
+    // Speichere die Antwort für diese Frage
+    if (answerData) {
+      setQuestionAnswers(prev => new Map(prev).set(currentQuestionIndex, answerData));
     }
   };
 
@@ -211,6 +229,7 @@ export default function LernzielDetailPage() {
     setCorrectAnswers(new Set());
     setTotalPoints(0);
     setQuizCompleted(false);
+    setQuestionAnswers(new Map());
 
     // Wähle neue zufällige Fragen
     const newSelection = selectRandomQuestions(allQuestions, questionConfig.questionsToShow);
@@ -372,6 +391,7 @@ export default function LernzielDetailPage() {
                         onComplete={handleAnswerComplete}
                         questionNumber={currentQuestionIndex + 1}
                         totalQuestions={selectedQuestions.length}
+                        savedAnswer={questionAnswers.get(currentQuestionIndex)}
                       />
                     ) : (
                       <MultipleChoiceBio
@@ -379,6 +399,7 @@ export default function LernzielDetailPage() {
                         onComplete={handleAnswerComplete}
                         questionNumber={currentQuestionIndex + 1}
                         totalQuestions={selectedQuestions.length}
+                        savedAnswer={questionAnswers.get(currentQuestionIndex)}
                       />
                     )}
                   </>

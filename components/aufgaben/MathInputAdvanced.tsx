@@ -14,9 +14,10 @@ interface MathInputAdvancedProps {
     explanation: string;
     hint?: string;
   };
-  onComplete: (correct: boolean, points?: number) => void;
+  onComplete: (correct: boolean, points?: number, answerData?: any) => void;
   questionNumber?: number;
   totalQuestions?: number;
+  savedAnswer?: any;
 }
 
 // Symbol-Kategorien
@@ -76,11 +77,12 @@ const SYMBOLS = {
   ],
 };
 
-export default function MathInputAdvanced({ 
-  question, 
+export default function MathInputAdvanced({
+  question,
   onComplete,
   questionNumber,
-  totalQuestions 
+  totalQuestions,
+  savedAnswer
 }: MathInputAdvancedProps) {
   const [answer, setAnswer] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -89,14 +91,24 @@ export default function MathInputAdvanced({
   const [showHint, setShowHint] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // WICHTIG: State zurücksetzen wenn neue Frage kommt
+  // WICHTIG: State zurücksetzen oder aus savedAnswer laden wenn Frage wechselt
   useEffect(() => {
-    setAnswer('');
-    setSubmitted(false);
-    setIsCorrect(false);
-    setShowHint(false);
-    setActiveTab('häufig');
-  }, [question.id]);
+    if (savedAnswer) {
+      // Lade gespeicherte Antwort
+      setAnswer(savedAnswer.answer || '');
+      setSubmitted(savedAnswer.submitted || false);
+      setIsCorrect(savedAnswer.isCorrect || false);
+      setShowHint(savedAnswer.showHint || false);
+      setActiveTab(savedAnswer.activeTab || 'häufig');
+    } else {
+      // Neue Frage - zurücksetzen
+      setAnswer('');
+      setSubmitted(false);
+      setIsCorrect(false);
+      setShowHint(false);
+      setActiveTab('häufig');
+    }
+  }, [question.id, savedAnswer]);
 
   // Symbol an Cursor-Position einfügen
   const insertSymbol = (symbol: string) => {
@@ -119,7 +131,7 @@ export default function MathInputAdvanced({
 
   const checkAnswer = () => {
     setSubmitted(true);
-    
+
     // Normalisiere beide Antworten: Entferne alle Leerzeichen und mache lowercase
     const normalizeAnswer = (str: string) => {
       return str
@@ -127,15 +139,24 @@ export default function MathInputAdvanced({
         .replace(/\s+/g, '')       // Entferne ALLE Leerzeichen (auch mehrfache)
         .toLowerCase();            // Kleinbuchstaben für Vergleich
     };
-    
+
     const normalizedUserAnswer = normalizeAnswer(answer);
     const normalizedCorrectAnswer = normalizeAnswer(question.answer);
 
     const correct = normalizedUserAnswer === normalizedCorrectAnswer;
     setIsCorrect(correct);
 
+    // Speichere State für diese Frage
+    const answerData = {
+      answer,
+      submitted: true,
+      isCorrect: correct,
+      showHint,
+      activeTab
+    };
+
     // Math-Fragen geben immer 1 Punkt wenn richtig, 0 wenn falsch
-    onComplete(correct, correct ? 1 : 0);
+    onComplete(correct, correct ? 1 : 0, answerData);
   };
 
   const tryAgain = () => {

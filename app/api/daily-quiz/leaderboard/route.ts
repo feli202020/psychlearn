@@ -50,6 +50,7 @@ export async function GET(request: NextRequest) {
         user_id,
         user:user_profiles!daily_quiz_results_user_id_fkey (
           username,
+          display_name,
           anonymous_in_leaderboard
         )
       `)
@@ -127,7 +128,7 @@ export async function GET(request: NextRequest) {
       rank: index + 1,
       username: result.user?.anonymous_in_leaderboard
         ? 'Anonymer Teilnehmer'
-        : (result.user?.username || 'Anonymer Nutzer'),
+        : (result.user?.display_name || result.user?.username || 'Anonymer Nutzer'),
       score: result.score,
       totalPoints: result.total_points,
       maxPoints,

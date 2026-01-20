@@ -88,6 +88,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   async function signUp(email: string, password: string, username: string, semester?: number) {
+    // Prüfe ob Username bereits existiert (case-insensitive)
+    const { data: existingUsername } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .ilike('username', username)
+      .single();
+
+    if (existingUsername) {
+      throw new Error('Dieser Benutzername ist bereits vergeben');
+    }
+
+    // Prüfe ob Display-Name bereits existiert (case-insensitive)
+    // Display-Name ist initial gleich Username
+    const { data: existingDisplayName } = await supabase
+      .from('user_profiles')
+      .select('id')
+      .ilike('display_name', username)
+      .single();
+
+    if (existingDisplayName) {
+      throw new Error('Dieser Anzeigename ist bereits vergeben');
+    }
+
     // User registrieren - Profil wird automatisch durch Database Trigger erstellt
     const siteUrl = typeof window !== 'undefined'
       ? window.location.origin
@@ -127,6 +150,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (profileError) {
         console.error('Fehler beim Erstellen des Profils:', profileError);
+        throw new Error('Fehler beim Erstellen des Profils');
       }
     }
 

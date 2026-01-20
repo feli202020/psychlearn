@@ -14,22 +14,31 @@ interface MultipleChoiceBioProps {
     explanation: string;
     hint?: string;  // Optionaler Tipp
   };
-  onComplete: (correct: boolean, points?: number) => void;
+  onComplete: (correct: boolean, points?: number, answerData?: any) => void;
   questionNumber: number;
   totalQuestions: number;
+  savedAnswer?: any;
 }
 
-export default function MultipleChoiceBio({ question, onComplete, questionNumber, totalQuestions }: MultipleChoiceBioProps) {
+export default function MultipleChoiceBio({ question, onComplete, questionNumber, totalQuestions, savedAnswer }: MultipleChoiceBioProps) {
   const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [showHint, setShowHint] = useState(false);
 
-  // WICHTIG: State zurücksetzen wenn neue Frage kommt
+  // WICHTIG: State zurücksetzen oder aus savedAnswer laden wenn Frage wechselt
   useEffect(() => {
-    setSelectedIndices([]);
-    setSubmitted(false);
-    setShowHint(false);
-  }, [question.id]);
+    if (savedAnswer) {
+      // Lade gespeicherte Antwort
+      setSelectedIndices(savedAnswer.selectedIndices || []);
+      setSubmitted(savedAnswer.submitted || false);
+      setShowHint(savedAnswer.showHint || false);
+    } else {
+      // Neue Frage - zurücksetzen
+      setSelectedIndices([]);
+      setSubmitted(false);
+      setShowHint(false);
+    }
+  }, [question.id, savedAnswer]);
 
   const handleToggle = (index: number) => {
     if (submitted) return;
@@ -60,7 +69,14 @@ export default function MultipleChoiceBio({ question, onComplete, questionNumber
     const wrongSelected = selectedIndices.filter(i => !question.correct_indices.includes(i)).length;
     const points = Math.max(0, correctSelected - wrongSelected);
 
-    onComplete(isCorrect, points);
+    // Speichere State für diese Frage
+    const answerData = {
+      selectedIndices,
+      submitted: true,
+      showHint
+    };
+
+    onComplete(isCorrect, points, answerData);
   };
 
   const getAnswerStatus = () => {

@@ -92,7 +92,7 @@ export async function GET(request: Request) {
 
       const { data: profiles, error: profilesError } = await supabase
         .from('user_profiles')
-        .select('id, username, anonymous_in_leaderboard')
+        .select('id, username, display_name, anonymous_in_leaderboard')
         .in('id', userIds);
 
       console.log('[Leaderboard API] User Profiles:', {
@@ -142,7 +142,7 @@ export async function GET(request: Request) {
           rank: index + 1,
           username: userProfile?.anonymous_in_leaderboard
             ? 'Anonymer Teilnehmer'
-            : (userProfile?.username || 'Unbekannt'),
+            : (userProfile?.display_name || userProfile?.username || 'Unbekannt'),
           score: result.score,
           totalPoints: result.total_points,
           totalQuestions,

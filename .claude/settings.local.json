@@ -19,7 +19,9 @@
       "Bash(supabase --version:*)",
       "Bash(supabase status:*)",
       "Bash(psql:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npm install:*)",
+      "Bash(npm run build:*)"
     ]
   }
 }
