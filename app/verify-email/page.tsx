@@ -98,28 +98,28 @@ function VerifyEmailContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background px-4">
       <Card className="w-full max-w-md border-2 border-purple-200 shadow-xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
             <div className="relative">
-              <Brain className="w-12 h-12 text-purple-600" />
-              <Mail className="w-6 h-6 text-blue-600 absolute -bottom-1 -right-1 bg-white rounded-full p-1" />
+              <Brain className="w-12 h-12 text-primary" />
+              <Mail className="w-6 h-6 text-primary absolute -bottom-1 -right-1 bg-card rounded-full p-1" />
             </div>
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold text-primary">
             Bestätige deine E-Mail
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 space-y-3">
+          <div className="bg-primary/10 border-2 border-primary/30 rounded-lg p-4 space-y-3">
             <div className="flex items-start gap-3">
-              <Mail className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+              <Mail className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
               <div className="space-y-2">
                 <p className="text-sm text-gray-700 font-medium">
                   Wir haben dir eine Bestätigungs-E-Mail gesendet an:
                 </p>
-                <p className="text-base font-semibold text-blue-600 break-all">
+                <p className="text-base font-semibold text-primary break-all">
                   {email || 'deine E-Mail-Adresse'}
                 </p>
               </div>
@@ -221,13 +221,13 @@ function VerifyEmailContent() {
 export default function VerifyEmailPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 px-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background px-4">
         <Card className="w-full max-w-md border-2 border-purple-200 shadow-xl">
           <CardHeader className="text-center">
             <div className="flex justify-center mb-4">
-              <Brain className="w-12 h-12 text-purple-600" />
+              <Brain className="w-12 h-12 text-primary" />
             </div>
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold text-primary">
               Wird geladen...
             </CardTitle>
           </CardHeader>

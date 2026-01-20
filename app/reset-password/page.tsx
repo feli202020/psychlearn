@@ -52,8 +52,8 @@ export default function ResetPasswordPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 px-4">
-        <Card className="w-full max-w-md border-2 border-purple-200 shadow-xl">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background px-4">
+        <Card className="w-full max-w-md border-2 border-primary/30 shadow-xl">
           <CardContent className="p-12 text-center">
             <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-800 mb-2">
@@ -73,9 +73,9 @@ export default function ResetPasswordPage() {
       <Card className="w-full max-w-md border-2 border-purple-200 shadow-xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
-            <Brain className="w-12 h-12 text-purple-600" />
+            <Brain className="w-12 h-12 text-primary" />
           </div>
-          <CardTitle className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+          <CardTitle className="text-3xl font-bold text-primary">
             Neues Passwort setzen
           </CardTitle>
           <p className="text-gray-600 mt-2">Wähle ein neues sicheres Passwort</p>

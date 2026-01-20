@@ -91,7 +91,7 @@ export default function DailyQuizWidget() {
   const percentage = result ? Math.round((result.score / result.totalQuestions) * 100) : 0;
 
   return (
-    <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-b-2 border-purple-200">
+    <div className="bg-gradient-to-r from-primary/10 to-primary/5 border-b-2 border-primary/30">
       <div className="container mx-auto px-4">
         {/* Header - immer sichtbar */}
         <div className="flex items-center justify-between py-3">
@@ -143,7 +143,7 @@ export default function DailyQuizWidget() {
             )}
 
             {quizStatus === 'available' && (
-              <div className="bg-white rounded-lg p-4 border-2 border-purple-200 space-y-3">
+              <div className="bg-card rounded-lg p-4 border-2 border-primary/30 space-y-3">
                 <div className="flex items-start gap-3">
                   <Brain className="w-6 h-6 text-primary flex-shrink-0 mt-1" />
                   <div className="flex-1">
@@ -168,7 +168,7 @@ export default function DailyQuizWidget() {
             )}
 
             {quizStatus === 'completed' && result && (
-              <div className="bg-white rounded-lg p-4 border-2 border-purple-200 space-y-3">
+              <div className="bg-card rounded-lg p-4 border-2 border-primary/30 space-y-3">
                 <div className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-primary shrink-0 mt-1" />
                   <div className="flex-1">

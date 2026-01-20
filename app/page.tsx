@@ -10,7 +10,7 @@ export default function HomePage() {
   const { user } = useAuth();
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
+    <main className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background">
 
       {/* Hero Section */}
       <div className="container mx-auto px-4 py-20">

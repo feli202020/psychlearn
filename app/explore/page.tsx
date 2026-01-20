@@ -78,7 +78,7 @@ export default function ExplorePage() {
   }, [selectedModul]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background">
       <div className="flex">
         {/* Sidebar */}
         <ExploreSidebar
@@ -95,20 +95,20 @@ export default function ExplorePage() {
               <CardContent className="p-6">
                 <div className="flex flex-col md:flex-row items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center shrink-0">
-                    <Brain className="w-6 h-6 text-white" />
+                    <Brain className="w-6 h-6 text-primary-foreground" />
                   </div>
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="font-bold text-gray-800 text-lg mb-1">
+                    <h3 className="font-bold text-foreground text-lg mb-1">
                       👋 Willkommen bei PsychLearn!
                     </h3>
-                    <p className="text-sm text-gray-600">
+                    <p className="text-sm text-muted-foreground">
                       Du befindest dich im Preview-Modus. Erstelle einen kostenlosen Account, um alle Lerninhalte, Quizzes und Features freizuschalten.
                     </p>
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <Button
                       onClick={() => router.push('/register')}
-                      className="bg-primary hover:bg-primary/90 text-white"
+                      className="bg-primary hover:bg-primary/90"
                     >
                       Kostenlos registrieren
                     </Button>
@@ -129,8 +129,8 @@ export default function ExplorePage() {
             // Kein Modul ausgewählt
             <div className="flex flex-col items-center justify-center min-h-[60vh]">
               <Brain className="w-24 h-24 text-muted-foreground mb-6" />
-              <h1 className="text-3xl font-bold text-gray-700 mb-4">Willkommen beim Lernen!</h1>
-              <p className="text-lg text-gray-500 text-center max-w-md">
+              <h1 className="text-3xl font-bold text-foreground mb-4">Willkommen beim Lernen!</h1>
+              <p className="text-lg text-muted-foreground text-center max-w-md">
                 Wähle ein Semester und Modul aus der Seitenleiste, um mit dem Lernen zu beginnen.
               </p>
               <Button
@@ -197,13 +197,13 @@ export default function ExplorePage() {
                 // Lerninhalte Tab
                 <div>
                   {lerninhalte.length === 0 ? (
-                    <Card className="border-2 border-dashed border-gray-300">
+                    <Card className="border-2 border-dashed border-border">
                       <CardContent className="p-12 text-center">
-                        <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                        <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-xl font-semibold text-foreground mb-2">
                           Noch keine Lerninhalte vorhanden
                         </h3>
-                        <p className="text-gray-500">
+                        <p className="text-muted-foreground">
                           Für dieses Modul wurden noch keine Lerninhalte hinzugefügt.
                         </p>
                       </CardContent>
@@ -214,14 +214,14 @@ export default function ExplorePage() {
                         <Card key={inhalt.id} className="border-2 border-border hover:border-primary/50 transition-all">
                           <CardHeader className="pb-2">
                             <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm">
+                              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
                                 {inhalt.reihenfolge}
                               </div>
                               <CardTitle className="text-lg">{inhalt.titel}</CardTitle>
                             </div>
                           </CardHeader>
                           <CardContent>
-                            <div className="prose prose-sm max-w-none text-gray-600">
+                            <div className="prose prose-sm max-w-none text-muted-foreground">
                               {user ? inhalt.inhalt : inhalt.inhalt.substring(0, 150) + '...'}
                             </div>
                             {!user && (
@@ -264,13 +264,13 @@ export default function ExplorePage() {
                   {quizTabExpanded && (
                     <>
                       {lernziele.length === 0 ? (
-                        <Card className="border-2 border-dashed border-gray-300">
+                        <Card className="border-2 border-dashed border-border">
                           <CardContent className="p-12 text-center">
-                            <CheckCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                            <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                            <CheckCircle className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
+                            <h3 className="text-xl font-semibold text-foreground mb-2">
                               Noch keine Lernziele vorhanden
                             </h3>
-                            <p className="text-gray-500">
+                            <p className="text-muted-foreground">
                               Für dieses Semester wurden noch keine Lernziele hinzugefügt.
                             </p>
                           </CardContent>
@@ -283,14 +283,14 @@ export default function ExplorePage() {
                                 <CardTitle className="text-lg">{lz.titel}</CardTitle>
                               </CardHeader>
                               <CardContent>
-                                <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                                <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
                                   {lz.beschreibung}
                                 </p>
                                 <div className="flex items-center justify-between text-xs mb-4">
-                                  <span className="text-gray-500">{lz.fach?.name}</span>
+                                  <span className="text-muted-foreground">{lz.fach?.name}</span>
                                   <div className="flex items-center gap-2">
                                     <span>{'⭐'.repeat(lz.schwierigkeitsgrad)}</span>
-                                    <span className="text-gray-500">{lz.geschaetzte_dauer} Min</span>
+                                    <span className="text-muted-foreground">{lz.geschaetzte_dauer} Min</span>
                                   </div>
                                 </div>
                                 {user ? (

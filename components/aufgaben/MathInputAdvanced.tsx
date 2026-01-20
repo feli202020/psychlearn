@@ -179,8 +179,8 @@ export default function MathInputAdvanced({
             </Button>
             
             {showHint && (
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 mb-3">
-                <p className="text-sm text-blue-800">
+              <div className="bg-primary/10 border-2 border-primary/30 rounded-lg p-3 mb-3">
+                <p className="text-sm text-primary">
                   <strong>💡 Tipp:</strong> {question.hint}
                 </p>
               </div>
@@ -196,7 +196,7 @@ export default function MathInputAdvanced({
               onClick={() => setActiveTab('häufig')}
               className={`flex-1 px-4 py-2 font-medium transition-colors ${
                 activeTab === 'häufig'
-                  ? 'bg-white border-b-2 border-primary text-primary'
+                  ? 'bg-card border-b-2 border-primary text-primary'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -206,7 +206,7 @@ export default function MathInputAdvanced({
               onClick={() => setActiveTab('erweitert')}
               className={`flex-1 px-4 py-2 font-medium transition-colors ${
                 activeTab === 'erweitert'
-                  ? 'bg-white border-b-2 border-primary text-primary'
+                  ? 'bg-card border-b-2 border-primary text-primary'
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -215,7 +215,7 @@ export default function MathInputAdvanced({
           </div>
 
           {/* Symbol-Buttons */}
-          <div className="p-3 bg-white">
+          <div className="p-3 bg-card">
             <div className="grid grid-cols-8 gap-2">
               {SYMBOLS[activeTab].map(({ symbol, label }) => (
                 <button

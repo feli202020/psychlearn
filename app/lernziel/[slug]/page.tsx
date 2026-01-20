@@ -239,7 +239,7 @@ export default function LernzielDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-gray-600">Lade Lernziel...</p>
@@ -250,7 +250,7 @@ export default function LernzielDetailPage() {
 
   if (!lernziel) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-gray-800 mb-4">Lernziel nicht gefunden</h1>
           <p className="text-gray-600 mb-4">Der Slug "{slug}" konnte nicht gefunden werden.</p>
@@ -267,7 +267,7 @@ export default function LernzielDetailPage() {
     Math.round((correctAnswers.size / selectedQuestions.length) * 100) : 0;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-12">
+    <main className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background py-12">
       <div className="container mx-auto px-4 max-w-4xl">
 
         <Button

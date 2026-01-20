@@ -206,7 +206,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -234,7 +234,7 @@ export default function SettingsPage() {
         )}
 
         {/* Semester-Einstellungen */}
-        <Card className="mb-6 border-2 border-purple-100">
+        <Card className="mb-6 border-2 border-primary/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <GraduationCap className="w-5 h-5 text-primary" />
@@ -245,16 +245,16 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <Calendar className="w-5 h-5 text-blue-600 mt-0.5" />
+                <Calendar className="w-5 h-5 text-primary mt-0.5" />
                 <div>
-                  <p className="font-semibold text-blue-900">Aktuelles Semester (automatisch)</p>
-                  <p className="text-sm text-blue-700">
+                  <p className="font-semibold text-primary">Aktuelles Semester (automatisch)</p>
+                  <p className="text-sm text-foreground">
                     {currentSemester}. Semester ({currentSemester % 2 === 1 ? 'Wintersemester' : 'Sommersemester'})
                   </p>
                   {nextSemesterDate && (
-                    <p className="text-xs text-blue-600 mt-1">
+                    <p className="text-xs text-primary mt-1">
                       Nächstes Semester startet am: {formatDate(nextSemesterDate)}
                     </p>
                   )}
@@ -275,8 +275,8 @@ export default function SettingsPage() {
                     className={`
                       p-3 rounded-lg font-semibold transition-all
                       ${selectedSemester === sem
-                        ? 'bg-primary text-white shadow-lg'
-                        : 'bg-white border-2 border-gray-200 text-gray-700 hover:border-purple-300'
+                        ? 'bg-primary text-primary-foreground shadow-lg'
+                        : 'bg-card border-2 border-gray-200 text-gray-700 hover:border-primary'
                       }
                       ${loading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
                     `}
@@ -297,7 +297,7 @@ export default function SettingsPage() {
 
 
         {/* Account-Sicherheit */}
-        <Card className="mb-6 border-2 border-purple-100">
+        <Card className="mb-6 border-2 border-primary/30">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Key className="w-5 h-5 text-primary" />
@@ -308,10 +308,10 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-card rounded-lg border border-border">
               <div>
-                <p className="font-medium text-gray-900">{user.email}</p>
-                <p className="text-sm text-gray-500">
+                <p className="font-medium text-foreground">{user.email}</p>
+                <p className="text-sm text-muted-foreground">
                   {user.email_confirmed_at ? (
                     <span className="text-green-600 flex items-center gap-1">
                       <CheckCircle className="w-4 h-4" />

@@ -36,7 +36,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 px-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background px-4">
       <Card className="w-full max-w-md border-2 border-border shadow-xl">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-4">
@@ -110,8 +110,8 @@ export default function RegisterPage() {
                     className={`
                       p-3 rounded-lg font-semibold transition-all border-2
                       ${semester === sem
-                        ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white border-purple-600'
-                        : 'bg-white border-gray-300 text-gray-700 hover:border-purple-300'
+                        ? 'bg-primary text-primary-foreground border-primary'
+                        : 'bg-card border-gray-300 text-gray-700 hover:border-primary'
                       }
                     `}
                   >

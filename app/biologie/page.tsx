@@ -103,9 +103,9 @@ export default function BiologiePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background">
         <div className="text-center">
-          <Loader2 className="w-12 h-12 animate-spin text-purple-600 mx-auto mb-4" />
+          <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-gray-600">Lade Aufgaben aus Datenbank...</p>
         </div>
       </div>
@@ -114,7 +114,7 @@ export default function BiologiePage() {
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background">
         <Card className="max-w-md border-2 border-red-200">
           <CardContent className="p-8 text-center">
             <div className="text-red-600 mb-4 text-4xl">❌</div>
@@ -131,7 +131,7 @@ export default function BiologiePage() {
 
   if (aufgaben.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-primary/5 to-background">
         <Card className="max-w-md">
           <CardContent className="p-8 text-center">
             <Brain className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -152,14 +152,14 @@ export default function BiologiePage() {
   const currentAufgabe = aufgaben[currentIndex];
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-100 py-12">
+    <main className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background py-12">
       <div className="container mx-auto px-4 max-w-4xl">
         
         {/* Header */}
         <div className="flex items-center gap-3 mb-8">
-          <Brain className="w-10 h-10 text-purple-600" />
+          <Brain className="w-10 h-10 text-primary" />
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
+            <h1 className="text-4xl font-bold text-primary">
               Biologische Psychologie Quiz
             </h1>
             <p className="text-gray-600 mt-1">75 Fragen aus der Datenbank 🧠</p>
@@ -167,7 +167,7 @@ export default function BiologiePage() {
         </div>
 
         {/* Progress Bar */}
-        <Card className="mb-6 border-2 border-purple-200">
+        <Card className="mb-6 border-2 border-primary/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-3">
               <span className="text-sm font-medium text-gray-700">
@@ -178,8 +178,8 @@ export default function BiologiePage() {
               </span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3">
-              <div 
-                className="bg-gradient-to-r from-purple-600 to-blue-600 h-3 rounded-full transition-all duration-300"
+              <div
+                className="bg-primary h-3 rounded-full transition-all duration-300"
                 style={{ width: `${((currentIndex + 1) / aufgaben.length) * 100}%` }}
               />
             </div>
@@ -228,10 +228,10 @@ export default function BiologiePage() {
         </div>
 
         {/* Info-Box */}
-        <Card className="mt-8 border-2 border-blue-200 bg-blue-50">
+        <Card className="mt-8 border-2 border-primary/30 bg-primary/10">
           <CardContent className="p-6">
-            <h3 className="font-semibold text-blue-900 mb-2">💡 Info:</h3>
-            <p className="text-sm text-blue-800">
+            <h3 className="font-semibold text-primary mb-2">💡 Info:</h3>
+            <p className="text-sm text-foreground">
               Diese Aufgaben werden direkt aus der Supabase-Datenbank geladen. 
               Du hast {aufgaben.length} von 75 verfügbaren Fragen.
             </p>

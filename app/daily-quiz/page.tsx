@@ -504,7 +504,7 @@ function DailyQuizContent() {
   // Zeige Loading während Auth lädt
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-gray-600">Authentifizierung...</p>
@@ -517,7 +517,7 @@ function DailyQuizContent() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-gray-600">Lade Daily Quiz...</p>
@@ -578,7 +578,7 @@ function DailyQuizContent() {
     }
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-8 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background py-8 px-4">
         <div className="max-w-2xl mx-auto">
           <Card className="border-2 border-border">
             <CardHeader className="text-center pb-2">
@@ -639,7 +639,7 @@ function DailyQuizContent() {
 
               {/* Lernziele Section */}
               {uniqueLernziele.length > 0 && (
-                <div className="bg-white border-2 border-border rounded-lg p-4 text-left">
+                <div className="bg-card border-2 border-border rounded-lg p-4 text-left">
                   <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                     <BookOpen className="w-5 h-5 text-primary" />
                     Behandelte Lernziele in diesem Quiz:
@@ -708,7 +708,7 @@ function DailyQuizContent() {
 
               {/* Leaderboard Section */}
               {leaderboard.length > 0 && (
-                <div className="bg-white border-2 border-border rounded-lg p-4">
+                <div className="bg-card border-2 border-border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-gray-800 flex items-center gap-2">
                       <Trophy className="w-5 h-5 text-yellow-500" />
@@ -731,7 +731,7 @@ function DailyQuizContent() {
                           <div
                             key={index}
                             className={`flex items-center justify-between p-2 rounded ${
-                              isCurrentUser ? 'bg-primary/10 border border-purple-200' : 'bg-gray-50'
+                              isCurrentUser ? 'bg-primary/10 border border-primary/30' : 'bg-gray-50'
                             }`}
                           >
                             <div className="flex items-center gap-3">
@@ -857,7 +857,7 @@ function DailyQuizContent() {
     }
 
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-8 px-4">
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background py-8 px-4">
         <div className="max-w-2xl mx-auto">
           <Card className="border-2 border-border">
             <CardHeader className="text-center pb-2">
@@ -886,7 +886,7 @@ function DailyQuizContent() {
                 {message}
               </p>
 
-              <div className="bg-white border-2 border-border rounded-lg p-4 text-left">
+              <div className="bg-card border-2 border-border rounded-lg p-4 text-left">
                 <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-primary" />
                   Behandelte Lernziele in diesem Quiz:
@@ -958,7 +958,7 @@ function DailyQuizContent() {
 
               {/* Leaderboard Section */}
               {leaderboard.length > 0 && (
-                <div className="bg-white border-2 border-border rounded-lg p-4">
+                <div className="bg-card border-2 border-border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-gray-800 flex items-center gap-2">
                       <Trophy className="w-5 h-5 text-yellow-500" />
@@ -981,7 +981,7 @@ function DailyQuizContent() {
                           <div
                             key={index}
                             className={`flex items-center justify-between p-2 rounded ${
-                              isCurrentUser ? 'bg-primary/10 border border-purple-200' : 'bg-gray-50'
+                              isCurrentUser ? 'bg-primary/10 border border-primary/30' : 'bg-gray-50'
                             }`}
                           >
                             <div className="flex items-center gap-3">
@@ -1045,7 +1045,7 @@ function DailyQuizContent() {
   const isMath = isMathQuestion(currentQuestion);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 py-8 px-4">
+    <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background py-8 px-4">
       <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="mb-6">
@@ -1095,8 +1095,8 @@ function DailyQuizContent() {
           <CardContent className="space-y-4">
             {/* Tipp */}
             {showHint && currentQuestion.hint && !submitted && (
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3">
-                <p className="text-sm text-blue-800">
+              <div className="bg-primary/10 border-2 border-primary/30 rounded-lg p-3">
+                <p className="text-sm text-primary">
                   <Lightbulb className="w-4 h-4 inline mr-1" />
                   <strong>Tipp:</strong> {currentQuestion.hint}
                 </p>
@@ -1314,7 +1314,7 @@ function DailyQuizContent() {
 export default function DailyQuizPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-background via-primary/5 to-background flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-gray-600">Lade Daily Quiz...</p>

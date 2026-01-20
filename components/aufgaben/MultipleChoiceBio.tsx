@@ -114,8 +114,8 @@ export default function MultipleChoiceBio({ question, onComplete, questionNumber
             </Button>
             
             {showHint && (
-              <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-3 mb-3">
-                <p className="text-sm text-blue-800">
+              <div className="bg-primary/10 border-2 border-primary/30 rounded-lg p-3 mb-3">
+                <p className="text-sm text-primary">
                   <strong>💡 Tipp:</strong> {question.hint}
                 </p>
               </div>

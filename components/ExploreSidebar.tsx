@@ -71,7 +71,7 @@ export default function ExploreSidebar({ selectedModul, onSelectModul, expandSem
       <Button
         variant="outline"
         size="icon"
-        className="fixed top-20 left-4 z-40 lg:hidden bg-white shadow-lg border-2 border-purple-200"
+        className="fixed top-20 left-4 z-40 lg:hidden bg-card shadow-lg border-2 border-primary/30"
         onClick={() => setIsOpen(!isOpen)}
       >
         {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -88,7 +88,7 @@ export default function ExploreSidebar({ selectedModul, onSelectModul, expandSem
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 bg-white border-r-2 border-purple-200
+          fixed top-16 left-0 h-[calc(100vh-4rem)] w-72 bg-card border-r-2 border-primary/30
           shadow-lg z-40 transform transition-transform duration-300 ease-in-out overflow-y-auto
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
           lg:translate-x-0 lg:static lg:z-0
@@ -117,7 +117,7 @@ export default function ExploreSidebar({ selectedModul, onSelectModul, expandSem
                 <div key={semester} className="border rounded-lg overflow-hidden">
                   <button
                     onClick={() => toggleSemester(semester)}
-                    className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 transition-colors"
+                    className="w-full flex items-center justify-between p-3 bg-gradient-to-r from-primary/10 to-primary/5 hover:from-primary/20 hover:to-primary/10 transition-colors"
                   >
                     <span className="font-semibold text-gray-700">
                       {semester}. Semester
@@ -130,15 +130,15 @@ export default function ExploreSidebar({ selectedModul, onSelectModul, expandSem
                   </button>
 
                   {expandedSemesters.has(semester) && (
-                    <div className="bg-gray-50">
+                    <div className="bg-background">
                       {moduleNachSemester[semester].map(modul => (
                         <button
                           key={modul.id}
                           onClick={() => handleSelectModul(modul)}
                           className={`
-                            w-full text-left px-4 py-3 text-sm border-t border-gray-200
-                            hover:bg-purple-50 transition-colors flex items-center gap-2
-                            ${selectedModul?.id === modul.id ? 'bg-purple-100 text-primary font-medium' : 'text-gray-600'}
+                            w-full text-left px-4 py-3 text-sm border-t border-border
+                            hover:bg-primary/10 transition-colors flex items-center gap-2
+                            ${selectedModul?.id === modul.id ? 'bg-primary/10 text-primary font-medium' : 'text-muted-foreground'}
                           `}
                         >
                           <BookOpen className={`w-4 h-4 shrink-0 ${selectedModul?.id === modul.id ? 'text-primary' : ''}`} />

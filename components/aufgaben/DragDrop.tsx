@@ -93,9 +93,9 @@ export default function DragDrop({ aufgabe, onComplete }: DragDropProps) {
         
         <div className="text-lg font-medium">{aufgabe.frage}</div>
 
-        <div className="relative bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-8 border-2 border-dashed border-blue-200 min-h-[400px]">
+        <div className="relative bg-gradient-to-br from-background via-primary/5 to-background rounded-xl p-8 border-2 border-dashed border-primary/30 min-h-[400px]">
           
-          <div className="absolute inset-4 border-4 border-blue-300 rounded-full opacity-20 pointer-events-none" />
+          <div className="absolute inset-4 border-4 border-primary/30 rounded-full opacity-20 pointer-events-none" />
           
           {drop_zones.map(zone => {
             const placedItem = placements[zone.id];
@@ -115,7 +115,7 @@ export default function DragDrop({ aufgabe, onComplete }: DragDropProps) {
                     ? 'border-green-500 bg-green-50'
                     : isWrong
                     ? 'border-red-500 bg-red-50'
-                    : 'border-blue-400 bg-blue-50'
+                    : 'border-primary bg-primary/10'
                 }`}
                 style={{
                   left: `${zone.x}px`,
@@ -168,7 +168,7 @@ export default function DragDrop({ aufgabe, onComplete }: DragDropProps) {
                   onDragStart={() => handleDragStart(item.id)}
                   className={`${
                     submitted ? 'opacity-50 cursor-not-allowed' : 'cursor-move hover:scale-105'
-                  } bg-white border-2 border-blue-300 rounded-lg p-4 transition-all shadow-sm`}
+                  } bg-card border-2 border-primary/30 rounded-lg p-4 transition-all shadow-sm`}
                 >
                   <div className="text-center">
                     <div className="text-4xl mb-2">{item.icon}</div>
