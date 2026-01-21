@@ -4,8 +4,12 @@
 export interface LerninhaltItem {
   id: string;
   titel: string;
+  beschreibung: string; // Kurzbeschreibung (ca. 10-15 Wörter)
+  kategorie: string; // Thematische Kategorie (z.B. "Statistik", "Messtheorie")
   inhalt: string;
   reihenfolge: number;
+  geschaetzte_dauer: number; // Bearbeitungszeit in Minuten
+  quizSlug?: string; // Verknüpfung zum zugehörigen Quiz/Lernziel
 }
 
 export interface ModulLerninhalte {
@@ -24,26 +28,7 @@ export const forschungsmethoden: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000100',
   modulName: 'Forschungsmethoden der Psychologie',
   semester: [1],
-  inhalte: [
-    {
-      id: 'fm-1',
-      titel: 'Einführung in wissenschaftliches Arbeiten',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'fm-2',
-      titel: 'Hypothesenbildung und Operationalisierung',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'fm-3',
-      titel: 'Experimentelle Designs',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // Quantitative Methoden I
@@ -53,22 +38,139 @@ export const quantitativeMethodenI: ModulLerninhalte = {
   semester: [1],
   inhalte: [
     {
-      id: 'qm1-1',
-      titel: 'Deskriptive Statistik',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'qm1-2',
-      titel: 'Wahrscheinlichkeitsrechnung',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'qm1-3',
-      titel: 'Verteilungen und Normalverteilung',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
+      id: 'qm1-skalenniveaus',
+      titel: 'Skalenniveaus und Messtheorie',
+      beschreibung: 'Lerne die vier Skalenniveaus kennen und verstehe ihre zulässigen Transformationen und Statistiken.',
+      kategorie: 'Messtheorie',
+      inhalt: `## Was ist Messen?
+
+**Messung** = Zuordnung von Zahlen zu Objekten, sodass **empirische Relationen** durch **numerische Relationen** repräsentiert werden.
+
+### Die zwei Grundfragen der Messtheorie
+1. **Existenzfrage:** Kann eine strukturerhaltende Zuordnung gefunden werden?
+2. **Eindeutigkeitsfrage:** Wie beliebig ist diese Zuordnung? Welche Transformationen sind zulässig?
+
+### Wichtige Relationseigenschaften
+| Eigenschaft | Definition |
+|-------------|------------|
+| **Reflexivität** | Für alle A gilt: A ~ A |
+| **Symmetrie** | Wenn A ~ B, dann B ~ A |
+| **Transitivität** | Wenn A ~ B und B ~ C, dann A ~ C |
+| **Totalität** | Für alle A, B: A > B oder B > A oder A = B |
+
+---
+
+## Nominalskala
+
+**Voraussetzung:** Objekte sind qualitativ unterscheidbar (gleich/verschieden).
+
+**Zulässige Transformationen:** Bijektive Abbildungen (eindeutige Umbenennungen)
+- Die Zahlen sind nur "Etiketten"
+- Beispiel: männlich = 1, weiblich = 2 **oder** männlich = 99, weiblich = 7
+
+**Beispiele:** Blutgruppe, Postleitzahlen, ICD-10 Codes, Geschlecht
+
+**Erlaubte Statistiken:** Modus, Häufigkeiten
+
+**Problem Mittelwert:**
+- Codierung 1: männlich = 1, weiblich = 2 → x̄ = 1.5
+- Codierung 2: männlich = 2, weiblich = 20 → x̄ = 11
+→ Verschiedene "Mittelwerte" für identische Daten!
+
+---
+
+## Ordinalskala
+
+**Voraussetzung:** Objekte können in eine **Rangfolge** gebracht werden.
+
+**Anforderungen:**
+1. Transitivität: Wenn A > B und B > C, dann A > C
+2. Totalität: Je zwei Objekte sind vergleichbar
+
+**Zulässige Transformationen:** Streng monotone Transformationen
+- Reihenfolge bleibt erhalten, Abstände dürfen sich ändern
+- Beispiel: 1, 2, 3 → 10, 20, 50 ✓
+
+**Beispiele:** Schulnoten (verbal), Härtegrade, Platzierungen
+
+**Erlaubte Statistiken:** Median, Modus, Perzentile
+
+**Problem - Intransitive Präferenzen:**
+- Film A > Film B (bessere Geschichte)
+- Film B > Film C (bessere Geschichte)
+- Film C > Film A (besserer Hauptdarsteller)
+→ Transitivität verletzt durch Kriterienwechsel!
+
+---
+
+## Intervallskala
+
+**Voraussetzung:** Unterschiede zwischen Objekten sind quantitativ vergleichbar.
+
+**Zulässige Transformationen:** Positive lineare Transformationen: y = ax + b (a > 0)
+- Differenzenverhältnisse bleiben erhalten
+- Beispiel: Celsius ↔ Fahrenheit: F = 1.8 · C + 32
+
+**Beispiele:** Temperatur (°C, °F), IQ-Werte, Kalenderjahr
+
+**Erlaubte Statistiken:** Arithmetisches Mittel, Standardabweichung, Korrelation, t-Test
+
+**Wichtig - Keine Verhältnisse!**
+"10°C ist doppelt so warm wie 5°C" ist **falsch**!
+- In Fahrenheit: 50°F vs. 41°F → Verhältnis ≠ 2:1
+
+---
+
+## Verhältnisskala
+
+**Zusätzlich zur Intervallskala:** Absoluter Nullpunkt (0 = Abwesenheit des Merkmals)
+
+**Zulässige Transformationen:** y = ax (mit a > 0)
+
+**Beispiele:** Gewicht, Länge, Zeit, Kelvin-Temperatur
+
+**Bedeutsame Aussage:** "Person A ist doppelt so schwer wie Person B" ✓
+
+---
+
+## Überblick
+
+| Skala | Repräsentiert | Transformation | Statistiken |
+|-------|---------------|----------------|-------------|
+| Nominal | Gleichheit | Bijektiv | Modus |
+| Ordinal | Rangordnung | Monoton | Median |
+| Intervall | Differenzen | Linear | Mittelwert |
+| Verhältnis | Verhältnisse | Ähnlichkeit | Alle |
+
+---
+
+## Bedeutsamkeit
+
+Eine statistische Aussage ist **bedeutsam**, wenn sie unter allen zulässigen Transformationen **invariant** bleibt.
+
+---
+
+## Conjoint Measurement
+
+**Problem:** Bei psychologischen Merkmalen fehlt eine empirische Vereinigungsoperation.
+
+**Lösung:** Objekte mit zwei Eigenschaften verwenden:
+- Person (Fähigkeit) × Aufgabe (Schwierigkeit) → Lösungswahrscheinlichkeit
+
+Wenn bestimmte Ordnungsaxiome erfüllt sind, kann man beiden Eigenschaften separate Intervallskalen zuweisen.
+
+---
+
+## Praxisfragen
+
+**Schulnoten:** Bestenfalls ordinal!
+- Rangordnung: 1.0 besser als 2.0 ✓
+- Gleiche Abstände? Nicht nachweisbar
+
+**Likert-Skalen:** Formal ordinal, oft als quasi-intervallskaliert behandelt`,
+      reihenfolge: 1,
+      geschaetzte_dauer: 15,
+      quizSlug: 'skalenniveaus'
     }
   ]
 };
@@ -78,32 +180,7 @@ export const biologischePsychologie: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000102',
   modulName: 'Biologische Psychologie',
   semester: [1],
-  inhalte: [
-    {
-      id: 'bio-1',
-      titel: 'Aufbau des Nervensystems',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'bio-2',
-      titel: 'Neuronen und Synapsen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'bio-3',
-      titel: 'Neurotransmitter',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    },
-    {
-      id: 'bio-4',
-      titel: 'Gehirnstrukturen und ihre Funktionen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 4
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -115,26 +192,7 @@ export const differentiellePsychologie: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000104',
   modulName: 'Differentielle Psychologie und Persönlichkeitspsychologie',
   semester: [1, 2],
-  inhalte: [
-    {
-      id: 'diff-1',
-      titel: 'Persönlichkeitstheorien im Überblick',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'diff-2',
-      titel: 'Big Five Persönlichkeitsmodell',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'diff-3',
-      titel: 'Intelligenz und kognitive Fähigkeiten',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // Sozialpsychologie
@@ -142,26 +200,7 @@ export const sozialpsychologie: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000105',
   modulName: 'Sozialpsychologie',
   semester: [1, 2],
-  inhalte: [
-    {
-      id: 'soz-1',
-      titel: 'Soziale Wahrnehmung und Attribution',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'soz-2',
-      titel: 'Einstellungen und Einstellungsänderung',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'soz-3',
-      titel: 'Gruppenprozesse und Konformität',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -173,26 +212,7 @@ export const quantitativeMethodenII: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000106',
   modulName: 'Quantitative Methoden II',
   semester: [2],
-  inhalte: [
-    {
-      id: 'qm2-1',
-      titel: 'Inferenzstatistik Grundlagen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'qm2-2',
-      titel: 't-Tests und Varianzanalyse',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'qm2-3',
-      titel: 'Korrelation und Regression',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // Einführung in empirisch-wissenschaftliches Arbeiten
@@ -200,26 +220,7 @@ export const empirischWissenschaftlich: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000107',
   modulName: 'Einführung in empirisch-wissenschaftliches Arbeiten',
   semester: [2],
-  inhalte: [
-    {
-      id: 'ewa-1',
-      titel: 'Literaturrecherche und Quellenarbeit',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'ewa-2',
-      titel: 'Wissenschaftliches Schreiben',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'ewa-3',
-      titel: 'Planung empirischer Studien',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -231,26 +232,7 @@ export const allgemeinePsychologieI: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000108',
   modulName: 'Allgemeine Psychologie I',
   semester: [2, 3],
-  inhalte: [
-    {
-      id: 'ap1-1',
-      titel: 'Wahrnehmung',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'ap1-2',
-      titel: 'Aufmerksamkeit',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'ap1-3',
-      titel: 'Gedächtnis',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // Entwicklungspsychologie
@@ -258,26 +240,7 @@ export const entwicklungspsychologie: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000103',
   modulName: 'Entwicklungspsychologie',
   semester: [2, 3],
-  inhalte: [
-    {
-      id: 'entw-1',
-      titel: 'Entwicklungstheorien',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'entw-2',
-      titel: 'Kognitive Entwicklung',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'entw-3',
-      titel: 'Sozial-emotionale Entwicklung',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -289,26 +252,7 @@ export const diagnostikGrundlagen: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000110',
   modulName: 'Grundlagen psychologischer Diagnostik',
   semester: [3],
-  inhalte: [
-    {
-      id: 'diag-1',
-      titel: 'Grundlagen der Testtheorie',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'diag-2',
-      titel: 'Gütekriterien psychologischer Tests',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'diag-3',
-      titel: 'Diagnostische Methoden',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // Klinische Psychologie und Psychotherapie (Basismodul)
@@ -316,26 +260,7 @@ export const klinischeBasis: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000111',
   modulName: 'Klinische Psychologie und Psychotherapie (Basismodul)',
   semester: [3],
-  inhalte: [
-    {
-      id: 'klin-b-1',
-      titel: 'Klassifikationssysteme (ICD, DSM)',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'klin-b-2',
-      titel: 'Ätiologische Modelle',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'klin-b-3',
-      titel: 'Überblick Psychotherapieverfahren',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -347,26 +272,7 @@ export const aoPsychologie: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000112',
   modulName: 'Organisations- und Personalpsychologie',
   semester: [3, 4],
-  inhalte: [
-    {
-      id: 'ao-1',
-      titel: 'Personalauswahl und Assessment',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'ao-2',
-      titel: 'Motivation und Arbeitszufriedenheit',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'ao-3',
-      titel: 'Führung und Leadership',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -378,26 +284,7 @@ export const diagnostischeVerfahren: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000114',
   modulName: 'Diagnostische Verfahren',
   semester: [4],
-  inhalte: [
-    {
-      id: 'diagv-1',
-      titel: 'Leistungstests und Intelligenztests',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'diagv-2',
-      titel: 'Persönlichkeitsfragebögen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'diagv-3',
-      titel: 'Projektive Verfahren',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // Klinische Psychologie und Psychotherapie (Aufbaumodul)
@@ -405,26 +292,7 @@ export const klinischeAufbau: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000115',
   modulName: 'Klinische Psychologie und Psychotherapie (Aufbaumodul)',
   semester: [4],
-  inhalte: [
-    {
-      id: 'klin-a-1',
-      titel: 'Affektive Störungen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'klin-a-2',
-      titel: 'Angststörungen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'klin-a-3',
-      titel: 'Persönlichkeitsstörungen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -436,26 +304,7 @@ export const allgemeinePsychologieII: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000113',
   modulName: 'Allgemeine Psychologie II',
   semester: [4, 5],
-  inhalte: [
-    {
-      id: 'ap2-1',
-      titel: 'Emotion und Motivation',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'ap2-2',
-      titel: 'Denken und Problemlösen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'ap2-3',
-      titel: 'Sprache',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // Pädagogische Psychologie
@@ -463,26 +312,7 @@ export const paedagogischePsychologie: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000116',
   modulName: 'Pädagogische Psychologie',
   semester: [4, 5],
-  inhalte: [
-    {
-      id: 'paed-1',
-      titel: 'Lerntheorien',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'paed-2',
-      titel: 'Instruktion und Unterricht',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'paed-3',
-      titel: 'Leistungsbeurteilung',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -494,26 +324,7 @@ export const arbeitspsychologie: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000117',
   modulName: 'Arbeitspsychologie und Occupational Health',
   semester: [5, 6],
-  inhalte: [
-    {
-      id: 'arb-1',
-      titel: 'Arbeitsgestaltung und Ergonomie',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'arb-2',
-      titel: 'Stress und Belastung am Arbeitsplatz',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'arb-3',
-      titel: 'Work-Life-Balance',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // Grundlagen der Medizin und Pharmakologie
@@ -521,26 +332,7 @@ export const medizinPharmakologie: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000118',
   modulName: 'Grundlagen der Medizin und Pharmakologie',
   semester: [5, 6],
-  inhalte: [
-    {
-      id: 'med-1',
-      titel: 'Psychopharmakologie Grundlagen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'med-2',
-      titel: 'Antidepressiva und Anxiolytika',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'med-3',
-      titel: 'Antipsychotika',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -552,26 +344,7 @@ export const klinischePraxis: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000119',
   modulName: 'Klinische Psychologie und Psychotherapie (Praxismodul)',
   semester: [6],
-  inhalte: [
-    {
-      id: 'klin-p-1',
-      titel: 'Gesprächsführung und Anamnese',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'klin-p-2',
-      titel: 'Therapeutische Interventionen',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'klin-p-3',
-      titel: 'Fallkonzeption und Behandlungsplanung',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // Abschlussmodul Bachelor Psychologie
@@ -579,26 +352,7 @@ export const abschlussmodul: ModulLerninhalte = {
   modulId: '00000000-0000-0000-0000-000000000122',
   modulName: 'Abschlussmodul Bachelor Psychologie',
   semester: [6],
-  inhalte: [
-    {
-      id: 'abschl-1',
-      titel: 'Wissenschaftliches Arbeiten für die Bachelorarbeit',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 1
-    },
-    {
-      id: 'abschl-2',
-      titel: 'Forschungsdesign und Methodik',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 2
-    },
-    {
-      id: 'abschl-3',
-      titel: 'Auswertung und Präsentation',
-      inhalt: 'TESTTEXT',
-      reihenfolge: 3
-    }
-  ]
+  inhalte: []
 };
 
 // ============================================================================
@@ -647,4 +401,15 @@ export function getLerninhalteByModulId(modulId: string): LerninhaltItem[] {
 // Hilfsfunktion: Alle Module eines Semesters mit Lerninhalten
 export function getLerninhalteForSemester(semester: number): ModulLerninhalte[] {
   return alleLerninhalte.filter(m => m.semester.includes(semester));
+}
+
+// Hilfsfunktion: Lerninhalt nach ID finden (gibt auch Modul-Info zurück)
+export function getLerninhaltById(inhaltId: string): { inhalt: LerninhaltItem; modul: ModulLerninhalte } | null {
+  for (const modul of alleLerninhalte) {
+    const inhalt = modul.inhalte.find(i => i.id === inhaltId);
+    if (inhalt) {
+      return { inhalt, modul };
+    }
+  }
+  return null;
 }

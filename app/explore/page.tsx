@@ -9,7 +9,7 @@ import { Modul, Lernziel } from '@/lib/types';
 import { getLerninhalteByModulId, LerninhaltItem } from '@/content/lerninhalte';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Brain, BookOpen, CheckCircle, Play, FileText, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, Brain, BookOpen, CheckCircle, Play, FileText, ChevronDown, ChevronUp, Clock } from 'lucide-react';
 import ExploreSidebar from '@/components/ExploreSidebar';
 
 export default function ExplorePage() {
@@ -211,23 +211,35 @@ export default function ExplorePage() {
                   ) : (
                     <div className="space-y-4">
                       {lerninhalte.map((inhalt) => (
-                        <Card key={inhalt.id} className="border-2 border-border hover:border-primary/50 transition-all">
-                          <CardHeader className="pb-2">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-foreground font-bold text-sm">
+                        <Card key={inhalt.id} className="group border-2 border-border hover:border-primary/50 hover:shadow-lg transition-all duration-300">
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start gap-4">
+                              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center text-primary-foreground font-bold text-sm shadow-md group-hover:scale-105 transition-transform">
                                 {inhalt.reihenfolge}
                               </div>
-                              <CardTitle className="text-lg">{inhalt.titel}</CardTitle>
+                              <div className="flex-1">
+                                <CardTitle className="text-lg mb-2 group-hover:text-primary transition-colors">{inhalt.titel}</CardTitle>
+                                <p className="text-sm text-muted-foreground leading-relaxed">
+                                  {inhalt.beschreibung}
+                                </p>
+                              </div>
                             </div>
                           </CardHeader>
-                          <CardContent>
-                            <div className="prose prose-sm max-w-none text-muted-foreground">
-                              {user ? inhalt.inhalt : inhalt.inhalt.substring(0, 150) + '...'}
+                          <CardContent className="pt-0">
+                            <div className="flex items-center gap-3 mb-4">
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                                <Clock className="w-3.5 h-3.5" />
+                                <span>{inhalt.geschaetzte_dauer} Min</span>
+                              </div>
+                              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 text-xs font-medium">
+                                <BookOpen className="w-3.5 h-3.5" />
+                                <span>{inhalt.kategorie}</span>
+                              </div>
                             </div>
-                            {!user && (
-                              <div className="mt-4 p-4 bg-muted border-2 border-border rounded-lg">
+                            {!user ? (
+                              <div className="p-4 bg-muted border-2 border-border rounded-lg">
                                 <p className="text-sm text-foreground font-medium mb-2">
-                                  🔒 Melde dich an, um den vollständigen Lerninhalt zu sehen
+                                  Melde dich an, um den vollständigen Lerninhalt zu sehen
                                 </p>
                                 <div className="flex gap-2">
                                   <Button
@@ -245,12 +257,13 @@ export default function ExplorePage() {
                                   </Button>
                                 </div>
                               </div>
-                            )}
-                            {user && (
-                              <Button className="mt-4 bg-primary">
-                                <Play className="w-4 h-4 mr-2" />
-                                Lerninhalt starten
-                              </Button>
+                            ) : (
+                              <Link href={`/lerninhalt/${inhalt.id}`}>
+                                <Button className="bg-primary">
+                                  <Play className="w-4 h-4 mr-2" />
+                                  Lerninhalt starten
+                                </Button>
+                              </Link>
                             )}
                           </CardContent>
                         </Card>

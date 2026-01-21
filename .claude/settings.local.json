@@ -21,7 +21,8 @@
       "Bash(psql:*)",
       "Bash(grep:*)",
       "Bash(npm install:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npx tsx:*)"
     ]
   }
 }
